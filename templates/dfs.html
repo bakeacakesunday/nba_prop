@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NBA DFS Optimizer</title>
+<style>
+  :root {
+    --bg:       #0a0e1a;
+    --surface:  #111827;
+    --surface2: #1a2235;
+    --border:   #1e2d45;
+    --green:    #10b981;
+    --amber:    #f59e0b;
+    --red:      #ef4444;
+    --blue:     #3b82f6;
+    --purple:   #8b5cf6;
+    --teal:     #06b6d4;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+    --dk-green: #53d337;
+    --fd-blue:  #1493ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; min-height: 100vh; }
+
+  /* Header */
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 16px; }
+  .header-logo { font-size: 18px; font-weight: 700; color: var(--green); letter-spacing: -0.5px; }
+  .header-logo span { color: var(--amber); }
+  .header-date { color: var(--muted); font-size: 11px; }
+  .header-links { margin-left: auto; display: flex; gap: 12px; }
+  .header-links a { color: var(--muted); text-decoration: none; font-size: 11px; }
+  .header-links a:hover { color: var(--text); }
+
+  /* Layout */
+  .layout { display: grid; grid-template-columns: 280px 1fr 340px; gap: 0; height: calc(100vh - 49px); overflow: hidden; }
+  .sidebar-left  { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 16px; }
+  .main          { overflow-y: auto; padding: 16px; }
+  .sidebar-right { background: var(--surface); border-left: 1px solid var(--border); overflow-y: auto; padding: 16px; }
+
+  /* Section headers */
+  .section-title { font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+  /* Platform tabs */
+  .platform-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .platform-tab { flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; transition: all 0.15s; }
+  .platform-tab.dk.active { background: rgba(83,211,55,0.12); border-color: var(--dk-green); color: var(--dk-green); }
+  .platform-tab.fd.active { background: rgba(20,147,255,0.12); border-color: var(--fd-blue); color: var(--fd-blue); }
+  .platform-tab.p6.active { background: rgba(139,92,246,0.12); border-color: var(--purple); color: var(--purple); }
+  .platform-tab:hover { background: var(--surface2); }
+
+  /* Upload zone */
+  .upload-zone { border: 1.5px dashed var(--border); border-radius: 8px; padding: 14px; text-align: center; cursor: pointer; transition: all 0.15s; margin-bottom: 10px; }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--green); background: rgba(16,185,129,0.05); }
+  .upload-zone.loaded { border-color: var(--green); border-style: solid; background: rgba(16,185,129,0.05); }
+  .upload-icon { font-size: 22px; margin-bottom: 4px; }
+  .upload-label { font-size: 11px; color: var(--muted); }
+  .upload-count { font-size: 12px; color: var(--green); font-weight: 600; margin-top: 3px; }
+  .upload-input { display: none; }
+
+  /* Buttons */
+  .btn { padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; transition: all 0.15s; }
+  .btn-primary { background: var(--green); color: #000; }
+  .btn-primary:hover { background: #0ea572; }
+  .btn-primary:disabled { background: var(--muted); color: var(--bg); cursor: not-allowed; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .btn-full { width: 100%; }
+  .btn-export { background: rgba(59,130,246,0.15); color: var(--blue); border: 1px solid rgba(59,130,246,0.3); }
+
+  /* Status bar */
+  .status-bar { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 11px; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+  .status-dot.running { background: var(--amber); animation: pulse 1s infinite; }
+  .status-dot.done    { background: var(--green); }
+  .status-dot.error   { background: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* Optimizer settings */
+  .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .setting-label { font-size: 11px; color: var(--muted); }
+  .setting-input { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px; padding: 4px 8px; font-family: inherit; font-size: 12px; width: 70px; text-align: right; }
+  select.setting-input { width: auto; cursor: pointer; }
+
+  /* Player pool table */
+  .pool-header { display: grid; grid-template-columns: 32px 1fr 54px 60px 60px 60px 54px; gap: 4px; padding: 6px 8px; font-size: 10px; color: var(--muted); letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+  .pool-row { display: grid; grid-template-columns: 32px 1fr 54px 60px 60px 60px 54px; gap: 4px; padding: 7px 8px; border-bottom: 1px solid rgba(30,45,69,0.5); cursor: pointer; transition: background 0.1s; align-items: center; }
+  .pool-row:hover { background: var(--surface2); }
+  .pool-row.locked   { background: rgba(16,185,129,0.08); }
+  .pool-row.excluded { opacity: 0.35; }
+  .pool-search { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 7px 10px; font-family: inherit; font-size: 12px; margin-bottom: 8px; }
+  .pool-search:focus { outline: none; border-color: var(--blue); }
+  .pos-badge { display: inline-block; padding: 2px 5px; border-radius: 3px; font-size: 10px; font-weight: 700; background: var(--surface2); color: var(--muted); }
+  .pos-badge.PG { color: #60a5fa; } .pos-badge.SG { color: #a78bfa; }
+  .pos-badge.SF { color: var(--green); } .pos-badge.PF { color: var(--amber); }
+  .pos-badge.C  { color: var(--red); }
+  .proj-val { font-weight: 700; color: var(--text); }
+  .val-good { color: var(--green); } .val-ok { color: var(--amber); } .val-bad { color: var(--red); }
+  .lock-btn { padding: 2px 6px; border-radius: 3px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 10px; font-family: inherit; transition: all 0.1s; }
+  .lock-btn:hover { border-color: var(--green); color: var(--green); }
+  .lock-btn.locked { background: rgba(16,185,129,0.2); border-color: var(--green); color: var(--green); }
+  .lock-btn.excluded { background: rgba(239,68,68,0.2); border-color: var(--red); color: var(--red); }
+
+  /* Lineups */
+  .lineup-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+  .lineup-header { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); gap: 10px; }
+  .lineup-num { font-size: 11px; color: var(--muted); }
+  .lineup-proj { font-size: 16px; font-weight: 700; color: var(--green); }
+  .lineup-salary { font-size: 11px; color: var(--muted); margin-left: auto; }
+  .lineup-remaining { font-size: 11px; }
+  .lineup-players { padding: 8px; }
+  .lineup-player-row { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 4px; }
+  .lineup-player-row:hover { background: rgba(255,255,255,0.03); }
+  .lp-slot { width: 36px; font-size: 10px; color: var(--muted); }
+  .lp-name { flex: 1; font-size: 12px; }
+  .lp-proj { font-size: 12px; font-weight: 600; color: var(--green); width: 40px; text-align: right; }
+  .lp-salary { font-size: 11px; color: var(--muted); width: 50px; text-align: right; }
+  .lp-opp { font-size: 10px; color: var(--amber); }
+
+  /* Score summary */
+  .math-check { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-top: 8px; font-size: 11px; }
+  .math-row { display: flex; justify-content: space-between; padding: 2px 0; }
+  .math-total { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 4px; font-weight: 700; }
+  .math-ok { color: var(--green); }
+  .math-warn { color: var(--red); }
+
+  /* Tabs for main area */
+  .main-tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+  .main-tab { padding: 7px 14px; font-size: 12px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; margin-bottom: -1px; font-family: inherit; background: none; border-top: none; border-left: none; border-right: none; }
+  .main-tab.active { color: var(--text); border-bottom-color: var(--green); }
+  .main-tab:hover { color: var(--text); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Exposure chart */
+  .exposure-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .exp-name { width: 140px; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .exp-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; }
+  .exp-fill  { height: 100%; border-radius: 3px; background: var(--blue); }
+  .exp-pct   { font-size: 10px; color: var(--muted); width: 32px; text-align: right; }
+
+  /* Blowout risk tags */
+  .risk-tag { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  .risk-LOW      { background: rgba(16,185,129,0.15); color: var(--green); }
+  .risk-MODERATE { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .risk-HIGH, .risk-EXTREME { background: rgba(239,68,68,0.15); color: var(--red); }
+
+  /* Opp badge */
+  .opp-badge { background: rgba(245,158,11,0.15); color: var(--amber); padding: 1px 5px; border-radius: 3px; font-size: 10px; }
+
+  /* Game stack selector */
+  .game-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 20px; cursor: pointer; font-size: 11px; margin: 3px; transition: all 0.15s; background: transparent; font-family: inherit; color: var(--text); }
+  .game-pill.active { border-color: var(--teal); color: var(--teal); background: rgba(6,182,212,0.1); }
+  .game-pill:hover { border-color: var(--muted); }
+  .total-label { font-size: 10px; color: var(--muted); }
+
+  /* Empty states */
+  .empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+  .empty-icon { font-size: 32px; margin-bottom: 10px; }
+  .empty-msg { font-size: 13px; }
+  .empty-sub { font-size: 11px; margin-top: 6px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">NBA <span>DFS</span></div>
+  <div class="header-date" id="headerDate"></div>
+  <div class="header-links">
+    <a href="http://localhost:5000" target="_blank">← Props Tool</a>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR: Controls -->
+  <div class="sidebar-left">
+    <div class="section-title">Platform</div>
+    <div class="platform-tabs">
+      <button class="platform-tab dk active" onclick="setPlatform('dk',this)">DraftKings</button>
+      <button class="platform-tab fd"        onclick="setPlatform('fd',this)">FanDuel</button>
+      <button class="platform-tab p6"        onclick="setPlatform('pick6',this)">Pick6</button>
+    </div>
+
+    <div class="section-title" style="margin-top:14px">Salary Files</div>
+
+    <!-- DK Upload -->
+    <div class="upload-zone" id="dkUploadZone" onclick="document.getElementById('dkFile').click()"
+         ondragover="handleDrag(event)" ondrop="handleDrop(event,'dk')">
+      <div class="upload-icon">🟢</div>
+      <div class="upload-label">DraftKings CSV</div>
+      <div class="upload-count" id="dkCount">No file loaded</div>
+    </div>
+    <input type="file" id="dkFile" class="upload-input" accept=".csv" onchange="handleFile(event,'dk')">
+
+    <!-- FD Upload -->
+    <div class="upload-zone" id="fdUploadZone" onclick="document.getElementById('fdFile').click()"
+         ondragover="handleDrag(event)" ondrop="handleDrop(event,'fd')">
+      <div class="upload-icon">🔵</div>
+      <div class="upload-label">FanDuel CSV</div>
+      <div class="upload-count" id="fdCount">No file loaded</div>
+    </div>
+    <input type="file" id="fdFile" class="upload-input" accept=".csv" onchange="handleFile(event,'fd')">
+
+    <button class="btn btn-primary btn-full" id="runBtn" onclick="runPipeline()" style="margin-top:10px">
+      ▶ Build Projections
+    </button>
+
+    <div class="status-bar" id="statusBar" style="margin-top:10px">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusMsg">Ready — upload salary files to start</span>
+    </div>
+
+    <!-- Optimizer Settings -->
+    <div class="section-title" style="margin-top:16px">Optimizer</div>
+
+    <div class="setting-row">
+      <span class="setting-label">Lineups to generate</span>
+      <input type="number" class="setting-input" id="nLineups" value="1" min="1" max="150">
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Max player exposure</span>
+      <input type="number" class="setting-input" id="maxExposure" value="60" min="10" max="100">
+    </div>
+
+    <!-- Game Stack -->
+    <div class="section-title" style="margin-top:4px">Game Stack</div>
+    <div id="gameStackPills" style="margin-bottom:10px">
+      <span style="font-size:11px;color:var(--muted)">Load projections to see games</span>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Min players from stack</span>
+      <input type="number" class="setting-input" id="minStack" value="2" min="0" max="5">
+    </div>
+
+    <button class="btn btn-primary btn-full" id="optimizeBtn" onclick="runOptimizer()" style="margin-top:8px">
+      ⚡ Optimize Lineups
+    </button>
+    <button class="btn btn-secondary btn-full" onclick="clearLineups()" style="margin-top:6px">
+      Clear Lineups
+    </button>
+  </div>
+
+  <!-- MAIN: Player pool + Lineups tabs -->
+  <div class="main">
+    <div class="main-tabs">
+      <button class="main-tab active" onclick="showTab('pool',this)">Player Pool</button>
+      <button class="main-tab"       onclick="showTab('lineups',this)">Lineups (<span id="lineupCount">0</span>)</button>
+      <button class="main-tab"       onclick="showTab('exposure',this)">Exposure</button>
+    </div>
+
+    <!-- Player Pool Tab -->
+    <div class="tab-content active" id="tab-pool">
+      <input type="text" class="pool-search" placeholder="Search players..." oninput="filterPool(this.value)">
+      <div class="pool-header">
+        <div></div><div>Player</div><div>POS</div><div>PROJ</div><div>VALUE</div><div>SALARY</div><div>LOCK</div>
+      </div>
+      <div id="poolBody">
+        <div class="empty">
+          <div class="empty-icon">📊</div>
+          <div class="empty-msg">No projections yet</div>
+          <div class="empty-sub">Upload salary CSV and click Build Projections</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lineups Tab -->
+    <div class="tab-content" id="tab-lineups">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <button class="btn btn-export" id="exportBtn" onclick="exportCSV()">⬇ Export CSV</button>
+        <span style="font-size:11px;color:var(--muted)" id="exportPlatformLabel"></span>
+      </div>
+      <div id="lineupsBody">
+        <div class="empty">
+          <div class="empty-icon">⚡</div>
+          <div class="empty-msg">No lineups generated yet</div>
+          <div class="empty-sub">Click Optimize Lineups after building projections</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exposure Tab -->
+    <div class="tab-content" id="tab-exposure">
+      <div id="exposureBody">
+        <div class="empty">
+          <div class="empty-icon">📈</div>
+          <div class="empty-msg">Generate lineups to see exposure</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDEBAR: Lineup builder / math check -->
+  <div class="sidebar-right">
+    <div class="section-title">Lineup Inspector</div>
+    <div id="inspectorBody">
+      <div class="empty">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-msg">Click a lineup to inspect</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var platform    = 'dk';
+var projections = [];
+var lineups     = [];
+var locked      = [];
+var excluded    = [];
+var activeStack = null;
+var pollTimer   = null;
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'});
+  loadSalaryStatus();
+  loadProjections();
+});
+
+function loadSalaryStatus() {
+  fetch('/api/dfs/salary_status').then(r=>r.json()).then(d=>{
+    if (d.dk > 0) { document.getElementById('dkCount').textContent = d.dk + ' players'; document.getElementById('dkUploadZone').classList.add('loaded'); }
+    if (d.fd > 0) { document.getElementById('fdCount').textContent = d.fd + ' players'; document.getElementById('fdUploadZone').classList.add('loaded'); }
+  });
+}
+
+function loadProjections() {
+  fetch('/api/dfs/projections').then(r=>r.json()).then(d=>{
+    if (d.projections && d.projections.length) {
+      projections = d.projections;
+      renderPool();
+      renderGamePills();
+      setStatus('done', projections.length + ' players projected');
+    }
+  });
+}
+
+// ── Platform ─────────────────────────────────────────────────────────────────
+function setPlatform(p, el) {
+  platform = p;
+  document.querySelectorAll('.platform-tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderPool();
+  document.getElementById('exportPlatformLabel').textContent = p.toUpperCase() + ' format';
+}
+
+// ── File upload ───────────────────────────────────────────────────────────────
+function handleDrag(e) { e.preventDefault(); e.currentTarget.classList.add('dragover'); }
+function handleDrop(e, plat) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dragover');
+  var file = e.dataTransfer.files[0];
+  if (file) readAndUpload(file, plat);
+}
+function handleFile(e, plat) {
+  var file = e.target.files[0];
+  if (file) readAndUpload(file, plat);
+}
+function readAndUpload(file, plat) {
+  var reader = new FileReader();
+  reader.onload = function(e) { uploadSalary(plat, e.target.result); };
+  reader.readAsText(file);
+}
+function uploadSalary(plat, content) {
+  fetch('/api/dfs/upload_salary', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({platform: plat, content: content})
+  }).then(r=>r.json()).then(d=>{
+    if (d.error) { alert('Upload error: ' + d.error); return; }
+    var countEl = document.getElementById(plat + 'Count');
+    var zoneEl  = document.getElementById(plat + 'UploadZone');
+    countEl.textContent = d.players + ' players loaded';
+    zoneEl.classList.add('loaded');
+  });
+}
+
+// ── Pipeline ──────────────────────────────────────────────────────────────────
+function runPipeline() {
+  fetch('/api/dfs/run', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({date: new Date().toISOString().split('T')[0]})
+  }).then(r=>r.json()).then(d=>{
+    if (d.error) { alert(d.error); return; }
+    pollStatus();
+  });
+}
+
+function pollStatus() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(function() {
+    fetch('/api/dfs/status').then(r=>r.json()).then(d=>{
+      setStatus(d.status, d.message);
+      if (d.status === 'done') {
+        clearInterval(pollTimer);
+        loadProjections();
+      } else if (d.status === 'error') {
+        clearInterval(pollTimer);
+      }
+    });
+  }, 1500);
+}
+
+function setStatus(status, msg) {
+  var dot = document.getElementById('statusDot');
+  dot.className = 'status-dot ' + status;
+  document.getElementById('statusMsg').textContent = msg;
+}
+
+// ── Player pool ───────────────────────────────────────────────────────────────
+function renderPool(search) {
+  search = (search || '').toLowerCase();
+  var proj_key   = platform === 'dk' ? 'proj_dk'   : (platform === 'fd' ? 'proj_fd'   : 'proj_dk');
+  var salary_key = platform === 'dk' ? 'salary_dk' : (platform === 'fd' ? 'salary_fd' : 'salary_dk');
+  var pos_key    = platform === 'dk' ? 'position_dk': 'position_fd';
+
+  var players = projections.filter(function(p) {
+    if (search && !p.player_name.toLowerCase().includes(search)) return false;
+    if (platform !== 'pick6' && !p[salary_key]) return false;
+    return true;
+  });
+
+  if (!players.length) {
+    document.getElementById('poolBody').innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><div class="empty-msg">No players found</div></div>';
+    return;
+  }
+
+  var h = '';
+  players.forEach(function(p) {
+    var proj   = p[proj_key] || 0;
+    var sal    = p[salary_key] || 0;
+    var pos    = p[pos_key] || '—';
+    var val    = p['value_' + (platform === 'fd' ? 'fd' : 'dk')] || 0;
+    var valCl  = val >= 5 ? 'val-good' : val >= 4 ? 'val-ok' : 'val-bad';
+    var isLock = locked.includes(p.player_name);
+    var isExcl = excluded.includes(p.player_name);
+    var rowCl  = isLock ? 'locked' : isExcl ? 'excluded' : '';
+    var btnTxt = isLock ? '🔒' : isExcl ? '✕' : '+';
+    var btnCl  = isLock ? 'locked' : isExcl ? 'excluded' : '';
+
+    h += '<div class="pool-row ' + rowCl + '" onclick="togglePlayer(\'' + esc(p.player_name) + '\')">';
+    h += '<div></div>';
+    h += '<div><div style="font-size:12px">' + p.player_name + '</div>';
+    if (p.has_opp) h += '<span class="opp-badge">OPP</span> ';
+    if (p.blowout_level && p.blowout_level !== 'LOW' && p.blowout_level !== 'UNKNOWN') {
+      h += '<span class="risk-tag risk-' + p.blowout_level + '">' + p.blowout_level + '</span>';
+    }
+    h += '</div>';
+    h += '<div><span class="pos-badge ' + pos + '">' + pos + '</span></div>';
+    h += '<div class="proj-val">' + proj.toFixed(1) + '</div>';
+    h += '<div class="' + valCl + '">' + (val ? val.toFixed(1)+'x' : '—') + '</div>';
+    h += '<div style="color:var(--muted)">' + (sal ? '$' + sal.toLocaleString() : '—') + '</div>';
+    h += '<div><button class="lock-btn ' + btnCl + '" onclick="event.stopPropagation();cycleLock(\'' + esc(p.player_name) + '\')">' + btnTxt + '</button></div>';
+    h += '</div>';
+  });
+  document.getElementById('poolBody').innerHTML = h;
+}
+
+function filterPool(v) { renderPool(v); }
+
+function togglePlayer(name) {
+  // Click row = focus inspector on this player
+  var p = projections.find(function(x){ return x.player_name === name; });
+  if (p) showPlayerInspector(p);
+}
+
+function cycleLock(name) {
+  if (locked.includes(name)) {
+    locked = locked.filter(function(x){ return x !== name; });
+    excluded.push(name);
+  } else if (excluded.includes(name)) {
+    excluded = excluded.filter(function(x){ return x !== name; });
+  } else {
+    locked.push(name);
+  }
+  renderPool(document.querySelector('.pool-search').value);
+}
+
+function showPlayerInspector(p) {
+  var proj_key = 'proj_' + (platform === 'pick6' ? 'dk' : platform);
+  var sal_key  = 'salary_' + (platform === 'pick6' ? 'dk' : platform);
+  var stats = p.proj_stats || {};
+
+  var h = '<div style="margin-bottom:12px">';
+  h += '<div style="font-size:15px;font-weight:700">' + p.player_name + '</div>';
+  h += '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + p.team + (p.opponent ? ' vs ' + p.opponent : '') + ' · ' + (p.location || '') + '</div>';
+  h += '</div>';
+
+  h += '<div class="math-check" style="margin-bottom:12px">';
+  h += '<div class="math-row"><span>Projected FPTS</span><span style="color:var(--green);font-weight:700">' + (p[proj_key]||0).toFixed(1) + '</span></div>';
+  h += '<div class="math-row"><span>Salary</span><span>$' + ((p[sal_key]||0)).toLocaleString() + '</span></div>';
+  h += '<div class="math-row"><span>Value</span><span class="' + (((p['value_'+(platform==='fd'?'fd':'dk')])||0)>=4.5?'math-ok':'') + '">' + ((p['value_'+(platform==='fd'?'fd':'dk')])||0).toFixed(2) + 'x</span></div>';
+  h += '</div>';
+
+  h += '<div class="section-title">Projected Stat Line</div>';
+  h += '<div class="math-check">';
+  ['PTS','REB','AST','STL','BLK','TOV','FG3M'].forEach(function(s){
+    if (stats[s] != null) {
+      h += '<div class="math-row"><span>' + s + '</span><span>' + stats[s].toFixed(1) + '</span></div>';
+    }
+  });
+  h += '</div>';
+
+  if (p.has_opp) {
+    h += '<div style="margin-top:10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:6px;padding:8px 10px;font-size:11px">';
+    h += '🔥 <strong style="color:var(--amber)">OPPORTUNITY</strong><br><span style="color:var(--muted)">' + (p.opp_level || '') + '</span>';
+    h += '</div>';
+  }
+
+  if (p.blowout_level && p.blowout_level !== 'LOW' && p.blowout_level !== 'UNKNOWN') {
+    h += '<div style="margin-top:8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:6px;padding:8px 10px;font-size:11px">';
+    h += '⚠️ <strong style="color:var(--red)">' + p.blowout_level + ' BLOWOUT RISK</strong>';
+    h += '</div>';
+  }
+
+  if (p.is_b2b) {
+    h += '<div style="margin-top:8px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:6px;padding:8px 10px;font-size:11px">⚡ Back-to-back — projection adjusted</div>';
+  }
+
+  document.getElementById('inspectorBody').innerHTML = h;
+}
+
+// ── Game stacks ───────────────────────────────────────────────────────────────
+function renderGamePills() {
+  var games = {};
+  projections.forEach(function(p) {
+    if (p.game_key) games[p.game_key] = (games[p.game_key] || 0) + 1;
+  });
+  var h = '';
+  Object.keys(games).forEach(function(g) {
+    h += '<button class="game-pill ' + (activeStack === g ? 'active' : '') + '" onclick="setStack(\'' + g + '\',this)">' + g + ' <span class="total-label">(' + games[g] + ')</span></button>';
+  });
+  h += '<button class="game-pill ' + (!activeStack ? 'active' : '') + '" onclick="clearStack(this)">None</button>';
+  document.getElementById('gameStackPills').innerHTML = h;
+}
+
+function setStack(g, el) {
+  activeStack = g;
+  document.querySelectorAll('.game-pill').forEach(function(b){ b.classList.remove('active'); });
+  el.classList.add('active');
+}
+function clearStack(el) {
+  activeStack = null;
+  document.querySelectorAll('.game-pill').forEach(function(b){ b.classList.remove('active'); });
+  el.classList.add('active');
+}
+
+// ── Optimizer ─────────────────────────────────────────────────────────────────
+function runOptimizer() {
+  var n         = parseInt(document.getElementById('nLineups').value) || 1;
+  var maxExp    = parseInt(document.getElementById('maxExposure').value) || 60;
+  var minStack  = parseInt(document.getElementById('minStack').value) || 2;
+  var btn       = document.getElementById('optimizeBtn');
+  btn.disabled  = true;
+  btn.textContent = '⏳ Optimizing...';
+
+  fetch('/api/dfs/optimize', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      platform:       platform,
+      n_lineups:      n,
+      locked:         locked,
+      excluded:       excluded,
+      game_stack:     activeStack,
+      min_stack:      minStack,
+      max_exposure:   maxExp / 100,
+    })
+  }).then(r=>r.json()).then(function(d) {
+    btn.disabled = false;
+    btn.textContent = '⚡ Optimize Lineups';
+    if (d.error) { alert('Optimizer error: ' + d.error); return; }
+    lineups = d.lineups || [];
+    renderLineups();
+    renderExposure();
+    document.getElementById('lineupCount').textContent = lineups.length;
+    showTab('lineups', document.querySelectorAll('.main-tab')[1]);
+    document.getElementById('exportPlatformLabel').textContent = platform.toUpperCase() + ' format';
+  }).catch(function(e) {
+    btn.disabled = false;
+    btn.textContent = '⚡ Optimize Lineups';
+    alert('Optimizer error: ' + e.message);
+  });
+}
+
+function renderLineups() {
+  if (!lineups.length) {
+    document.getElementById('lineupsBody').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-msg">Could not generate lineups</div><div class="empty-sub">Check salary files are loaded and projections are built</div></div>';
+    return;
+  }
+
+  var h = '';
+  lineups.forEach(function(lineup, idx) {
+    var remaining = lineup.salary_remaining;
+    var remCl = remaining < 0 ? 'math-warn' : remaining < 500 ? 'math-ok' : '';
+    h += '<div class="lineup-card" onclick="inspectLineup(' + idx + ')">';
+    h += '<div class="lineup-header">';
+    h += '<span class="lineup-num">#' + (idx+1) + '</span>';
+    h += '<span class="lineup-proj">' + lineup.total_proj.toFixed(1) + ' pts</span>';
+    h += '<span class="lineup-salary" style="margin-left:auto">';
+    if (lineup.total_salary) {
+      h += '$' + lineup.total_salary.toLocaleString();
+      h += ' <span class="lineup-remaining ' + remCl + '">($' + remaining.toLocaleString() + ' left)</span>';
+    }
+    h += '</span>';
+    h += '</div>';
+    h += '<div class="lineup-players">';
+    (lineup.players || []).forEach(function(p) {
+      var sal_key  = 'salary_' + (lineup.platform === 'fd' ? 'fd' : 'dk');
+      var proj_key = 'proj_'   + (lineup.platform === 'fd' ? 'fd' : 'dk');
+      var oppTag   = p.has_opp ? '<span class="opp-badge">OPP</span>' : '';
+      h += '<div class="lineup-player-row">';
+      h += '<span class="lp-slot">' + (p.slot || '') + '</span>';
+      h += '<span class="lp-name">' + p.player_name + ' ' + oppTag + '</span>';
+      h += '<span class="lp-proj">' + (p[proj_key]||0).toFixed(1) + '</span>';
+      h += '<span class="lp-salary">$' + ((p[sal_key]||0)/1000).toFixed(1) + 'k</span>';
+      h += '</div>';
+    });
+    h += '</div>';
+
+    // Math check
+    var salCheck = lineup.total_salary <= (platform === 'fd' ? 60000 : 50000);
+    var sizeCheck = (lineup.players || []).length === (platform === 'fd' ? 9 : 8);
+    h += '<div class="math-check" style="margin:0 8px 8px">';
+    h += '<div class="math-row"><span>Salary Cap</span><span class="' + (salCheck?'math-ok':'math-warn') + '">' + (salCheck ? '✓' : '✗') + ' $' + lineup.total_salary.toLocaleString() + ' / $' + (platform==='fd'?'60,000':'50,000') + '</span></div>';
+    h += '<div class="math-row"><span>Roster Size</span><span class="' + (sizeCheck?'math-ok':'math-warn') + '">' + (sizeCheck?'✓':'✗') + ' ' + (lineup.players||[]).length + ' players</span></div>';
+    h += '<div class="math-row math-total"><span>Total Proj</span><span>' + lineup.total_proj.toFixed(1) + ' FPTS</span></div>';
+    h += '</div>';
+
+    h += '</div>';
+  });
+  document.getElementById('lineupsBody').innerHTML = h;
+}
+
+function inspectLineup(idx) {
+  var lineup = lineups[idx];
+  if (!lineup) return;
+
+  var proj_key = 'proj_' + (lineup.platform === 'fd' ? 'fd' : 'dk');
+  var sal_key  = 'salary_' + (lineup.platform === 'fd' ? 'fd' : 'dk');
+
+  var h = '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">Lineup #' + (idx+1) + ' · ' + lineup.platform.toUpperCase() + '</div>';
+
+  // Player-by-player breakdown
+  var totalProj = 0;
+  var totalSal  = 0;
+  (lineup.players || []).forEach(function(p) {
+    var proj = p[proj_key] || 0;
+    var sal  = p[sal_key]  || 0;
+    totalProj += proj;
+    totalSal  += sal;
+
+    h += '<div class="math-check" style="margin-bottom:6px">';
+    h += '<div class="math-row"><strong>' + p.player_name + '</strong><span class="pos-badge ' + (p.position_dk||'') + '">' + (p.slot||'') + '</span></div>';
+    h += '<div class="math-row"><span>Projection</span><span style="color:var(--green)">' + proj.toFixed(1) + ' pts</span></div>';
+    h += '<div class="math-row"><span>Salary</span><span>$' + sal.toLocaleString() + '</span></div>';
+    var stats = p.proj_stats || {};
+    var statStr = ['PTS','REB','AST','STL','BLK'].filter(function(s){ return stats[s]; }).map(function(s){ return stats[s].toFixed(1)+' '+s; }).join(' / ');
+    if (statStr) h += '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + statStr + '</div>';
+    h += '</div>';
+  });
+
+  var cap   = lineup.platform === 'fd' ? 60000 : 50000;
+  var under = cap - totalSal;
+  h += '<div class="math-check" style="border-color:var(--green)">';
+  h += '<div class="math-row math-total"><span>TOTAL PROJ</span><span style="color:var(--green)">' + totalProj.toFixed(1) + ' pts</span></div>';
+  h += '<div class="math-row"><span>Total Salary</span><span>$' + totalSal.toLocaleString() + '</span></div>';
+  h += '<div class="math-row"><span>Remaining</span><span class="' + (under>=0?'math-ok':'math-warn') + '">$' + under.toLocaleString() + '</span></div>';
+  h += '</div>';
+
+  document.getElementById('inspectorBody').innerHTML = h;
+}
+
+function renderExposure() {
+  var exp = {};
+  lineups.forEach(function(l) {
+    (l.players || []).forEach(function(p) {
+      exp[p.player_name] = (exp[p.player_name] || 0) + 1;
+    });
+  });
+
+  var sorted = Object.keys(exp).sort(function(a,b){ return exp[b]-exp[a]; });
+  var n = lineups.length;
+  var h = '';
+  sorted.forEach(function(name) {
+    var cnt = exp[name];
+    var pct = Math.round(cnt / n * 100);
+    var fill = pct;
+    var color = pct >= 80 ? 'var(--red)' : pct >= 60 ? 'var(--amber)' : 'var(--blue)';
+    h += '<div class="exposure-bar">';
+    h += '<span class="exp-name">' + name + '</span>';
+    h += '<div class="exp-track"><div class="exp-fill" style="width:' + fill + '%;background:' + color + '"></div></div>';
+    h += '<span class="exp-pct">' + pct + '%</span>';
+    h += '</div>';
+  });
+  document.getElementById('exposureBody').innerHTML = h || '<div class="empty"><div class="empty-msg">No data</div></div>';
+}
+
+function clearLineups() {
+  lineups = [];
+  document.getElementById('lineupsBody').innerHTML = '<div class="empty"><div class="empty-icon">⚡</div><div class="empty-msg">Lineups cleared</div></div>';
+  document.getElementById('exposureBody').innerHTML = '<div class="empty"><div class="empty-msg">No data</div></div>';
+  document.getElementById('lineupCount').textContent = '0';
+}
+
+// ── Export ─────────────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!lineups.length) { alert('No lineups to export'); return; }
+  fetch('/api/dfs/export_csv', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({platform: platform, lineups: lineups})
+  }).then(function(r) {
+    return r.blob();
+  }).then(function(blob) {
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href   = url;
+    a.download = (platform === 'fd' ? 'fd' : 'dk') + '_lineups.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function showTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.main-tab').forEach(function(t){ t.classList.remove('active'); });
+  document.getElementById('tab-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function esc(s) { return (s || '').replace(/'/g, "\\'"); }
+</script>
+</body>
+</html>
