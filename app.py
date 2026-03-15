@@ -12,6 +12,11 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
+from thresholds import (
+    L20_VETO_FLOOR, L20_EDGE_MIN, L20_PARLAY_MIN,
+    l20_threshold_for_stat, is_l20_below_threshold, normalize_rate,
+    _L20_WEAK_THRESHOLDS_PARLAY,  # backward compat alias
+)
 import sys
 import threading
 from datetime import date, datetime
@@ -1015,6 +1020,8 @@ def run_pipeline(game_date: str = None) -> dict:
                         # Historical hit rate signals
                         "hist_tier":         _hist_player_stat.get((pname, stat), {}).get("tier") or _hist_player.get(pname, {}).get("tier"),
                         "hist_stat_tier":    _hist_player_stat.get((pname, stat), {}).get("tier"),
+                        # Market price — no-vig implied probability (feeds EV signal in value layer)
+                        "implied_prob":      round(impl_prob * 100, 1) if impl_prob is not None else None,
                     }
                     # Also inject pos_line_hit_rate into ctx for score_from_vrow to pick up
                     _ctx_for_scoring = dict(ctx)
@@ -1676,6 +1683,7 @@ def _is_parlay_consider(card: dict) -> bool:
 
 
 # ── Stat component map (shared by parlay builder and parlay_analyze) ─────────
+
 _STAT_COMPONENTS: dict = {
     "PTS": frozenset(["PTS"]),
     "REB": frozenset(["REB"]),
@@ -1692,15 +1700,6 @@ _STAT_COMPONENTS: dict = {
     "TD":   frozenset(["TD"]),
 }
 
-_L20_WEAK_THRESHOLDS_PARLAY: dict = {
-    # Minimum L20 hit rate for parlay eligibility — anything below is a hard block.
-    # Raised from 0.12-0.15 range after 3/12 results showed 45-50% L20 props losing consistently.
-    # A prop with 50% L20 is a coin flip over its real sample — not a parlay leg.
-    "AST":  0.60, "FG3M": 0.55, "PA":  0.55,
-    "PR":   0.55, "PRA":  0.55, "PTS": 0.55,
-    "RA":   0.60, "REB":  0.60, "STL": 0.55,
-    "BLK":  0.50,  # blocks are noisier, slightly more lenient
-}
 
 _HARD_DQ_CATS = frozenset({"VOLATILE-FLOOR", "COMBINED STAT CV too high", "SHOT-DEPENDENT", "REGRESSION RISK"})
 
@@ -2438,19 +2437,7 @@ def _compute_dist_profile(l5_values: list, line: float, stat: str, hook_level: s
     # Sportsbooks set lines near each player's median output, so the average L20
     # across the board is ~37% by design — a hardcoded 55% gate eliminates 70% of
     # the board incorrectly. These thresholds only flag genuine outliers on the low end.
-    _L20_WEAK_THRESHOLDS = {
-        "AST":  0.12,   # mean=37.6% sd=16.9%
-        "BLK":  0.10,   # mean=26.7% sd=17.0% (floored at 10%)
-        "FG3M": 0.10,   # mean=34.8% sd=16.6% (floored at 10%)
-        "PA":   0.12,   # mean=36.8% sd=16.6%
-        "PR":   0.15,   # mean=38.5% sd=15.9%
-        "PRA":  0.13,   # mean=37.3% sd=16.3%
-        "PTS":  0.14,   # mean=38.3% sd=16.6%
-        "RA":   0.13,   # mean=38.0% sd=16.7%
-        "REB":  0.12,   # mean=35.7% sd=15.6%
-        "STL":  0.13,   # mean=37.7% sd=16.4%
-    }
-    _l20_thresh = _L20_WEAK_THRESHOLDS.get(stat_up, 0.12)
+    _l20_thresh = _L20_VETO_FLOOR.get(stat_up, 0.12)
 
     # Rule 1: B2B — hard DQ, not a warning (learned 2026-03-11)
     if is_b2b:

@@ -26,20 +26,11 @@ import argparse
 from pathlib import Path
 from datetime import date
 
-# ── Gate definitions (single source of truth) ────────────────────────────────
+# ── Gate definitions — thresholds imported from shared module ────────────────
+from thresholds import L20_PARLAY_MIN as _L20_THRESHOLDS_FRAC, normalize_rate
 
-_L20_THRESHOLDS = {
-    "AST":  60,   # assists are game-script sensitive — need sustained baseline
-    "REB":  60,   # rebounds require consistent role and minutes
-    "RA":   60,   # rebounds + assists combined
-    "PTS":  55,
-    "PR":   55,   # points + rebounds
-    "PRA":  55,   # points + rebounds + assists
-    "PA":   55,   # points + assists
-    "FG3M": 55,
-    "STL":  55,
-    "BLK":  50,   # most lenient — blocks are noisy, lower threshold accepted
-}
+# Export uses percent scale (55.0 not 0.55) for human readability in JSON output
+_L20_THRESHOLDS = {k: int(v * 100) for k, v in _L20_THRESHOLDS_FRAC.items()}
 
 _HARD_DQ_CATS = {
     "VOLATILE-FLOOR",

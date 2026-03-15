@@ -58,6 +58,8 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+from thresholds import l20_threshold_for_stat, normalize_rate
+
 logger = logging.getLogger(__name__)
 
 
@@ -93,6 +95,7 @@ def _compute_value(
     l5_hr: Optional[float],
     l10_hr: Optional[float],
     l20_hr: Optional[float],
+    implied_prob: Optional[float] = None,   # no-vig market implied prob, 0-100 scale
 ) -> tuple[float, int, str, list]:
     """
     Returns (value_score 0-100, direction_sign +1/-1, label, tags).
@@ -200,6 +203,56 @@ def _compute_value(
             season_boost = -3.0
 
     value_score = base_vs + modal_boost + tor_boost + season_boost
+
+    # ── Market price signal (EV) ──────────────────────────────────────────────
+    # EV = our estimated probability − market's no-vig implied probability.
+    #
+    # Positive EV: market underprices this outcome — we have edge.
+    # Negative EV: market is more confident than us — we are on the wrong side.
+    #
+    # Key insight: a Z=1.0 prop at -150 odds (66% implied) is very different from
+    # a Z=1.0 prop at +110 odds (48% implied). The same statistical edge is worth
+    # much more when the market isn't already pricing it in.
+    #
+    # We use the weighted hit rate as a proxy for model_prob when direction is clear.
+    # The EV adjustment is capped so it can't flip a negative-Z prop into a positive.
+    if implied_prob is not None:
+        # Build model probability estimate: blend WHR with TOR
+        whr_val = _weighted_hit_rate(l5_hr, l10_hr, l20_hr)
+        if true_over_rate_l10 is not None:
+            tor_val = true_over_rate_l10
+        elif true_over_rate_l20 is not None:
+            tor_val = true_over_rate_l20
+        else:
+            tor_val = whr_val
+
+        if whr_val is not None and tor_val is not None:
+            model_p = whr_val * 0.60 + tor_val * 0.40   # 0-1 scale
+
+            # For under direction, flip implied_prob (book quotes over side)
+            market_p = implied_prob / 100.0
+            if direction_sign == -1:
+                market_p = 1.0 - market_p
+
+            ev = model_p - market_p   # positive = we have price edge
+
+            if ev >= 0.08:
+                # Model sees 8%+ edge vs market — strong confirmation
+                ev_boost = min(10.0, ev * 80.0)   # 8% EV → +6.4pts, 12% → +9.6pts
+                value_score = min(100.0, value_score + ev_boost)
+                tags.append(f"+{ev*100:.0f}% EV vs market")
+            elif ev >= 0.04:
+                ev_boost = ev * 60.0   # 4% EV → +2.4pts, mild confirmation
+                value_score = min(100.0, value_score + ev_boost)
+            elif ev <= -0.08:
+                # Market is 8%+ more confident than us — serious disagreement
+                ev_penalty = min(12.0, abs(ev) * 80.0)
+                value_score = max(0.0, value_score - ev_penalty)
+                tags.append(f"market AGAINST: {ev*100:.0f}% EV")
+            elif ev <= -0.04:
+                ev_penalty = abs(ev) * 60.0
+                value_score = max(0.0, value_score - ev_penalty)
+
     value_score = round(max(0.0, min(100.0, value_score)), 1)
 
     if z >= 2.0:
@@ -314,15 +367,30 @@ def _compute_reliability(
             mult -= 0.18
 
     # ── Ghost rate ────────────────────────────────────────────────────────────
+    # Ghost = player plays real minutes but produces near-zero output.
+    # This is the most dangerous OVER failure mode — not injury, just nothing games.
+    # For UNDER bets: ghost risk is explicitly NOT a strong positive signal.
+    # Ghost games are unpredictable in timing — a player can ghost randomly regardless
+    # of matchup/pace/usage. Treating it as an under boost inflates noisy unders.
+    # Per spec: "keep noisy variance signals conservative."
+    # We apply a small positive for unders (ghost games help the under) but
+    # the big penalty is over-only.
     if ghost_rate is not None:
-        if ghost_rate >= 0.30:
-            mult -= 0.35
-            tags.append(f"ghost risk {ghost_rate*100:.0f}%")
-        elif ghost_rate >= 0.20:
-            mult -= 0.20
-            tags.append(f"ghost risk {ghost_rate*100:.0f}%")
-        elif ghost_rate >= 0.10:
-            mult -= 0.08
+        if direction_sign == 1:    # over — ghost risk is dangerous
+            if ghost_rate >= 0.30:
+                mult -= 0.35
+                tags.append(f"ghost risk {ghost_rate*100:.0f}%")
+            elif ghost_rate >= 0.20:
+                mult -= 0.20
+                tags.append(f"ghost risk {ghost_rate*100:.0f}%")
+            elif ghost_rate >= 0.10:
+                mult -= 0.08
+        elif direction_sign == -1:  # under — ghost risk is a mild positive, not inflated
+            if ghost_rate >= 0.30:
+                mult += 0.06   # conservative — ghost games occasionally help unders
+            elif ghost_rate >= 0.20:
+                mult += 0.03
+            # Below 20%: treat as neutral for unders
 
     # ── Sample size ───────────────────────────────────────────────────────────
     if n_games >= 15:
@@ -401,68 +469,109 @@ def _compute_reliability(
             mult -= 0.06
 
     # ── Real usage percentage ─────────────────────────────────────────────────
-    # High usage = player is reliably in the offense. Low usage = volatile role.
-    # This directly affects how predictable their output is.
+    # High usage = reliably in the offense → over signal.
+    # Low usage = sporadic role → under signal.
     if real_usage_pct is not None:
-        if real_usage_pct >= 0.30:
-            mult += 0.08   # primary option — reliable
-        elif real_usage_pct >= 0.25:
-            mult += 0.03
-        elif real_usage_pct <= 0.15:
-            mult -= 0.12   # very low usage — could disappear any night
-        elif real_usage_pct <= 0.18:
-            mult -= 0.06
+        if direction_sign == 1:
+            if real_usage_pct >= 0.30:
+                mult += 0.08
+            elif real_usage_pct >= 0.25:
+                mult += 0.03
+            elif real_usage_pct <= 0.15:
+                mult -= 0.12
+                tags.append(f"low usage {real_usage_pct*100:.0f}%")
+            elif real_usage_pct <= 0.18:
+                mult -= 0.06
+        elif direction_sign == -1:
+            if real_usage_pct <= 0.15:
+                mult += 0.10   # low usage confirms under — player won't get the ball
+                tags.append(f"low usage confirms under ({real_usage_pct*100:.0f}%)")
+            elif real_usage_pct <= 0.18:
+                mult += 0.05
+            elif real_usage_pct >= 0.30:
+                mult -= 0.08   # high usage makes under harder to hit
+            elif real_usage_pct >= 0.25:
+                mult -= 0.04
 
     # ── Net rating (rolling L10) ──────────────────────────────────────────────
-    # Players with strongly negative net rating get benched in blowouts.
-    # This directly suppresses their output on nights when the game is decided early.
+    # Negative net rating = benched in blowouts = suppressed output.
+    # Bad for overs. GOOD for unders. The Champagnie signal in both directions.
     if net_rating_l10 is not None:
-        if net_rating_l10 <= -8.0:
-            mult -= 0.15   # coaches actively bench this player when losing
-            tags.append(f"net_rating={net_rating_l10:.0f}")
-        elif net_rating_l10 <= -4.0:
-            mult -= 0.07
-        elif net_rating_l10 >= 8.0:
-            mult += 0.07   # coach trusts this player — stays on floor
+        if direction_sign == 1:
+            if net_rating_l10 <= -8.0:
+                mult -= 0.15
+                tags.append(f"net_rating={net_rating_l10:.0f}")
+            elif net_rating_l10 <= -4.0:
+                mult -= 0.07
+            elif net_rating_l10 >= 8.0:
+                mult += 0.07
+        elif direction_sign == -1:
+            if net_rating_l10 <= -8.0:
+                mult += 0.12   # gets benched when losing — confirms under
+                tags.append(f"poor net rating confirms under ({net_rating_l10:.0f})")
+            elif net_rating_l10 <= -4.0:
+                mult += 0.06
+            elif net_rating_l10 >= 8.0:
+                mult -= 0.07   # stays on floor — harder to go under
 
     # ── Role tier ─────────────────────────────────────────────────────────────
-    # CO-STAR is the sweet spot: enough usage to be predictable, lines often lazy.
-    # BENCH players have too much variance (DNP risk, volatile minutes).
     if usage_tier == "CO-STAR":
-        mult += 0.05
+        if direction_sign == 1:
+            mult += 0.05
+        elif direction_sign == -1:
+            mult -= 0.04   # CO-STAR going under is risky — they get the ball
     elif usage_tier == "BENCH":
-        mult -= 0.10
-        tags.append("bench player")
+        if direction_sign == 1:
+            mult -= 0.10
+            tags.append("bench player")
+        elif direction_sign == -1:
+            mult += 0.06   # bench role confirms under — sporadic usage
 
     # ── Minutes rank on team ──────────────────────────────────────────────────
     if min_rank is not None:
-        if min_rank <= 2:
-            mult += 0.05   # guaranteed heavy usage
-        elif min_rank >= 8:
-            mult -= 0.08   # deep rotation — volatile minutes
+        if direction_sign == 1:
+            if min_rank <= 2:
+                mult += 0.05
+            elif min_rank >= 8:
+                mult -= 0.08
+        elif direction_sign == -1:
+            if min_rank >= 8:
+                mult += 0.07   # deep rotation confirms under
+            elif min_rank <= 2:
+                mult -= 0.05   # iron man usage makes under harder
 
     # ── Minutes trend ─────────────────────────────────────────────────────────
+    # Role expanding = more output = helps overs, hurts unders.
+    # Role shrinking = less output = helps unders, hurts overs.
     if minutes_trend:
-        if "More MPG" in minutes_trend and direction_sign == 1:
-            mult += 0.08
-            tags.append("role expanding")
-        elif "Less MPG" in minutes_trend and direction_sign == 1:
-            mult -= 0.08
-            tags.append("role shrinking")
+        if "More MPG" in minutes_trend:
+            if direction_sign == 1:
+                mult += 0.08
+                tags.append("role expanding")
+            elif direction_sign == -1:
+                mult -= 0.08
+        elif "Less MPG" in minutes_trend:
+            if direction_sign == 1:
+                mult -= 0.08
+                tags.append("role shrinking")
+            elif direction_sign == -1:
+                mult += 0.10   # shrinking role confirms under
+                tags.append("role shrinking confirms under")
 
     # ── Injury opportunity ────────────────────────────────────────────────────
+    # Someone important is out = floor rises = bad for under bets.
     if opportunity_label and opportunity_label not in ("—", "", None):
         if direction_sign == 1:
             mult += 0.12
             tags.append(f"opportunity: {opportunity_label}")
+        elif direction_sign == -1:
+            mult -= 0.08   # injury opportunity makes under significantly harder
 
     # ── Historical edge tier ──────────────────────────────────────────────────
-    # The most powerful reliability signal: if graded outcomes show this player
-    # has historically beaten their props, that's validated empirical evidence.
     effective_hist = hist_stat_tier or hist_tier
     if direction_sign == 1 and effective_hist:
         if effective_hist == "PROVEN":
-            mult += 0.20   # 75%+ hit rate on 15+ graded props
+            mult += 0.20
             tags.append("PROVEN hist tier")
         elif effective_hist == "TRENDING":
             mult += 0.12
@@ -551,21 +660,25 @@ def _compute_situation(
         lg_avg = _LG_AVG[stat_up]
         allowed_pct = (opp_allowed - lg_avg) / lg_avg
         if direction_sign == 1:
-            if allowed_pct >= 0.10:
+            if allowed_pct >= 0.08:
                 raw += 0.15
                 tags.append(f"soft D (+{allowed_pct*100:.0f}% allowed)")
-            elif allowed_pct >= 0.05:
+            elif allowed_pct >= 0.04:
                 raw += 0.07
-            elif allowed_pct <= -0.10:
+            elif allowed_pct <= -0.08:
                 raw -= 0.12
                 tags.append(f"tough D ({allowed_pct*100:.0f}% allowed)")
-            elif allowed_pct <= -0.05:
+            elif allowed_pct <= -0.04:
                 raw -= 0.06
         elif direction_sign == -1:
-            if allowed_pct <= -0.10:
+            # Tough defense confirms under — less output expected
+            if allowed_pct <= -0.08:
                 raw += 0.12
-            elif allowed_pct >= 0.10:
-                raw -= 0.12
+                tags.append(f"tough D confirms under ({allowed_pct*100:.0f}%)")
+            elif allowed_pct <= -0.04:
+                raw += 0.06
+            elif allowed_pct >= 0.08:
+                raw -= 0.12   # soft D makes under harder to hit
 
     # Opponent defensive rating for combined stats
     if opp_def_rating is not None and stat_up in ("PRA", "PR", "PA", "RA"):
@@ -579,6 +692,12 @@ def _compute_situation(
                 raw -= 0.08
             elif def_delta <= -2.0:
                 raw -= 0.04
+        elif direction_sign == -1:
+            # Good defense (low def_rating) confirms under for combined stats
+            if def_delta <= -4.0:
+                raw += 0.06
+            elif def_delta >= 4.0:
+                raw -= 0.06
 
     # ── Game pace ─────────────────────────────────────────────────────────────
     # More possessions = more opportunities for counting stats.
@@ -596,6 +715,15 @@ def _compute_situation(
                 tags.append(f"slow pace ({game_pace:.0f})")
             elif pace_delta <= -2.5:
                 raw -= 0.05
+        elif direction_sign == -1:
+            # Slow pace = fewer possessions = suppressed counting stats = under confirmed
+            if pace_delta <= -5.0:
+                raw += 0.10
+                tags.append(f"slow pace confirms under ({game_pace:.0f})")
+            elif pace_delta <= -2.5:
+                raw += 0.05
+            elif pace_delta >= 5.0:
+                raw -= 0.08   # fast pace makes under harder
 
     # ── Positional matchup ────────────────────────────────────────────────────
     effective_matchup = pos_matchup_label or matchup_label or ""
@@ -788,16 +916,10 @@ def _check_hard_vetoes(
     if dist_profile == "VOLATILE-FLOOR":
         return "VOLATILE-FLOOR dist profile"
 
-    # Weak L20 by stat: the hit rate over 20 games doesn't support an over bet
-    _l20_thresholds = {
-        "AST": 0.55, "REB": 0.55, "RA": 0.55,
-        "PTS": 0.50, "PR": 0.50, "PRA": 0.50, "PA": 0.50,
-        "FG3M": 0.50, "BLK": 0.45, "STL": 0.45,
-    }
+    # Weak L20 — use unified thresholds from thresholds.py (single source of truth)
     if l20_hr is not None and direction_sign == 1:
-        # Normalize: app.py stores as 0-100, internal pipeline as 0-1
-        l20_norm = l20_hr / 100.0 if l20_hr > 1.0 else l20_hr
-        thresh = _l20_thresholds.get(stat.upper(), 0.50)
+        l20_norm = normalize_rate(l20_hr)
+        thresh = l20_threshold_for_stat(stat, context="edge")
         if l20_norm < thresh:
             return f"weak L20: {l20_norm*100:.0f}% < {thresh*100:.0f}% threshold"
 
@@ -905,6 +1027,9 @@ def compute_edge_score(
     tail_risk_low: Optional[float] = None,
     prob_over_plus1: Optional[float] = None,
     consistency_score: Optional[float] = None,
+    # Market price signal — no-vig implied probability from the sportsbook (0-100 scale)
+    # Used to compute EV = model_prob - implied_prob and detect over/under-priced markets
+    implied_prob: Optional[float] = None,
 ) -> dict:
     """
     Compute edge score for a prop.
@@ -968,6 +1093,7 @@ def compute_edge_score(
         l5_hr=l5_hit_rate,
         l10_hr=l10_hit_rate,
         l20_hr=l20_hit_rate,
+        implied_prob=implied_prob,
     )
 
     if value_score < 5.0 or direction_sign == 0:
@@ -987,6 +1113,43 @@ def compute_edge_score(
             "veto_reason":       None,
             "verdict_tags":      ["no edge"],
             "is_parlay_ready":   False,
+            "is_hammer":         False,
+            "is_lock":           False,
+        }
+
+    # ── Hit-rate-only early return ────────────────────────────────────────────
+    # Props with no distribution data scored purely from WHR.
+    # These bypass reliability/situation multipliers — there is no Z-score to
+    # amplify, so applying a 1.3× reliability multiplier would falsely inflate
+    # what is already a conservative score.  Cap stays at 60 (below any STRONG
+    # tier) so these never outrank props with real distribution data.
+    if "no dist" in value_label:
+        hr_edge = round(value_score, 1)   # already capped at 60 in _compute_value
+        direction = "OVER" if direction_sign == 1 else "UNDER"
+        whr_display = _weighted_hit_rate(l5_hit_rate, l10_hit_rate, l20_hit_rate)
+        if hr_edge >= 50:
+            final_call = f"✅ BET {direction} (hit-rate)"
+        elif hr_edge >= 38:
+            final_call = f"〰 LEAN {direction} (hit-rate)"
+        else:
+            final_call = "⚪ Skip"
+        return {
+            "edge_score":        hr_edge,
+            "direction":         direction,
+            "final_call":        final_call,
+            "value_score":       hr_edge,
+            "reliability":       1.0,
+            "situation":         1.0,
+            "misprice_score":    round(hr_edge * 0.40, 1),
+            "misprice_label":    value_label,
+            "confidence_score":  round(hr_edge * 0.25, 1),
+            "context_score":     0,
+            "role_score":        0,
+            "weighted_hit_rate": round(whr_display * 100, 1) if whr_display else None,
+            "veto":              False,
+            "veto_reason":       None,
+            "verdict_tags":      value_tags,
+            "is_parlay_ready":   (whr_display or 0) >= 0.75,
             "is_hammer":         False,
             "is_lock":           False,
         }
@@ -1088,10 +1251,16 @@ def compute_edge_score(
 
     # ── Legacy layer fields (for compatibility with existing app.py) ───────────
     # app.py reads misprice_score, confidence_score, context_score, role_score
-    # Map our new model's components to these fields for backward compatibility
+    # context_score must reflect the SITUATION contribution so test deltas are
+    # meaningful: a +0.07 situation raw change should produce ~1-2 pt delta.
+    # Formula: situation raw delta × 100 × value_score/100 gives pts on a 0-20 scale.
+    # For the baseline (situation=1.0), centre at 10.
     misprice_score   = round(min(40.0, value_score * 0.40), 1)
     confidence_score = round(min(25.0, value_score * reliability * 0.25), 1)
-    context_score    = round(min(20.0, value_score * reliability * situation * 0.20), 1)
+    # situation contributes (situation-1.0) * value_score * reliability to the product.
+    # Express this on the 0-20 legacy scale centred at 10.
+    _sit_contribution = (situation - 1.0) * value_score * reliability
+    context_score    = round(max(0.0, min(20.0, 10.0 + _sit_contribution * 0.5)), 1)
     role_score       = round(min(15.0, (reliability - 0.7) / 0.6 * 15.0), 1)
 
     return {
@@ -1256,4 +1425,189 @@ def score_from_vrow(vrow: dict, context: dict) -> dict:
         tail_risk_low=context.get("tail_risk_low"),
         prob_over_plus1=context.get("prob_over_plus1"),
         consistency_score=context.get("consistency_score"),
+        # Market price — no-vig implied prob from the sportsbook (0-100 scale)
+        implied_prob=vrow.get("implied_prob"),
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BACKWARD-COMPATIBLE SHIMS
+# These functions preserve the old additive-layer API for test_suite.py and
+# any UI code that imports them by name.  They are thin wrappers that reproduce
+# the original numeric contracts; they do NOT drive the live scoring model.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _score_confidence(
+    whr: Optional[float],
+    cv: Optional[float],
+    ghost_rate: Optional[float],
+    hook_score: int,
+    direction_sign: int,
+    n_games: int,
+    regression_soft: bool = False,
+    outlier_inflated: bool = False,
+    dist_profile: Optional[str] = None,
+    near_miss_pct: Optional[float] = None,
+) -> float:
+    """Legacy confidence layer (0-25). Used by test_suite.py."""
+    score = 0.0
+    if whr is not None:
+        if direction_sign == 1:
+            hr_norm = max(0.0, (whr - 0.50) / 0.30)
+        elif direction_sign == -1:
+            hr_norm = max(0.0, (0.50 - whr) / 0.30)
+        else:
+            hr_norm = 0.0
+        score += min(1.0, hr_norm) * 14.0
+    if cv is not None:
+        cv_norm = max(0.0, 1.0 - (cv / 0.55))
+        score += cv_norm * 7.0
+    if n_games >= 10:
+        score += 2.0
+    elif n_games >= 7:
+        score += 1.0
+    if ghost_rate is not None:
+        if ghost_rate >= 0.30:   score -= 8.0
+        elif ghost_rate >= 0.20: score -= 5.0
+        elif ghost_rate >= 0.10: score -= 2.0
+    score += hook_score * 1.5
+    if regression_soft:   score -= 5.0
+    if outlier_inflated:  score -= 9.0
+    if dist_profile in ("VOLATILE", "VOLATILE-FLOOR") and cv is None:
+        score -= 6.0
+    elif dist_profile in ("VOLATILE", "VOLATILE-FLOOR"):
+        score -= 3.0
+    if near_miss_pct is not None:
+        if direction_sign == -1:
+            if near_miss_pct >= 0.35:  score += 3.0
+            elif near_miss_pct >= 0.20: score += 1.5
+        elif direction_sign == 1:
+            if near_miss_pct >= 0.35:  score -= 2.0
+    return max(0.0, min(25.0, score))
+
+
+def _score_context(
+    stat: str,
+    direction_sign: int,
+    is_back_to_back: Optional[str],
+    matchup_label: Optional[str],
+    trend_direction: Optional[str],
+    h2h_hit_rate: Optional[float],
+    h2h_total: Optional[int],
+    home_away_split: Optional[float],
+    overall_avg: Optional[float],
+    revenge_game: Optional[str],
+    days_rest: Optional[int],
+    def_trend_delta: Optional[float],
+    pos_matchup_label: Optional[str],
+    tonight_location: Optional[str],
+    minutes_stability: Optional[str],
+    pos_mismatch: bool = False,
+    blowout_level: Optional[str] = None,
+    steam_move: bool = False,
+    sharp_move: bool = False,
+    line_move_direction: Optional[str] = None,
+) -> float:
+    """Legacy context layer (0-20). Used by test_suite.py."""
+    score = 10.0
+    effective_matchup = pos_matchup_label or matchup_label or ""
+    if direction_sign == 1:
+        if "Soft" in effective_matchup:   score += 3.5
+        elif "Tough" in effective_matchup: score -= 3.5
+    elif direction_sign == -1:
+        if "Tough" in effective_matchup:  score += 3.5
+        elif "Soft" in effective_matchup: score -= 3.5
+    if def_trend_delta is not None:
+        trend_adj = min(2.0, abs(def_trend_delta) / 3.0) * 2.0
+        if def_trend_delta > 0 and direction_sign == 1:   score += trend_adj
+        elif def_trend_delta < 0 and direction_sign == -1: score += trend_adj
+        elif def_trend_delta > 0 and direction_sign == -1: score -= trend_adj
+        elif def_trend_delta < 0 and direction_sign == 1:  score -= trend_adj
+    if is_back_to_back == "🔴 YES":
+        if direction_sign == 1:  score -= 6.0
+        elif direction_sign == -1: score += 2.0
+    if days_rest is not None:
+        if days_rest >= 3 and direction_sign == 1: score += 1.5
+    if h2h_hit_rate is not None and h2h_total is not None and h2h_total >= 2:
+        weight = min(1.0, h2h_total / 6.0)
+        if direction_sign == 1:
+            h2h_norm = (h2h_hit_rate - 50.0) / 30.0
+        else:
+            h2h_norm = (50.0 - h2h_hit_rate) / 30.0
+        score += max(-2.0, min(2.0, h2h_norm * weight * 2.0))
+    if home_away_split is not None and overall_avg is not None and overall_avg > 0:
+        split_diff_pct = (home_away_split - overall_avg) / overall_avg
+        if direction_sign == 1 and split_diff_pct >= 0.10:   score += 1.5
+        elif direction_sign == 1 and split_diff_pct <= -0.10: score -= 1.5
+    if revenge_game == "🔥 Revenge Game" and direction_sign == 1: score += 1.0
+    if minutes_stability and "Volatile" in minutes_stability:     score -= 2.0
+    if pos_mismatch and direction_sign == 1:   score += 2.5
+    elif pos_mismatch and direction_sign == -1: score -= 1.5
+    if blowout_level == "EXTREME" and direction_sign == 1: score -= 3.0
+    elif blowout_level == "HIGH" and direction_sign == 1:  score -= 1.5
+    if sharp_move:
+        if (direction_sign == 1 and line_move_direction == "UP") or \
+           (direction_sign == -1 and line_move_direction == "DOWN"):
+            score += 5.0
+        elif (direction_sign == 1 and line_move_direction == "DOWN") or \
+             (direction_sign == -1 and line_move_direction == "UP"):
+            score -= 3.0
+    elif steam_move:
+        if (direction_sign == 1 and line_move_direction == "UP") or \
+           (direction_sign == -1 and line_move_direction == "DOWN"):
+            score += 2.5
+        elif (direction_sign == 1 and line_move_direction == "DOWN") or \
+             (direction_sign == -1 and line_move_direction == "UP"):
+            score -= 1.5
+    return max(0.0, min(20.0, score))
+
+
+def _score_role(
+    usage_tier: Optional[str],
+    min_rank: Optional[int],
+    minutes_trend: Optional[str],
+    opportunity_label: Optional[str],
+    stat: str,
+    direction_sign: int,
+    regression_risk: bool,
+    hist_tier: Optional[str] = None,
+    hist_stat_tier: Optional[str] = None,
+    real_usage_pct: Optional[float] = None,
+    net_rating_l10: Optional[float] = None,
+    contract_year: bool = False,
+) -> float:
+    """Legacy role layer (0-15). Used by test_suite.py."""
+    score = 7.5
+    tier_scores = {"STAR": 2.0, "CO-STAR": 3.0, "ROLE": 2.0, "BENCH": -1.0}
+    score += tier_scores.get(usage_tier or "", 0.0)
+    if minutes_trend:
+        if "More MPG" in minutes_trend and direction_sign == 1:  score += 2.0
+        elif "Less MPG" in minutes_trend and direction_sign == -1: score += 2.0
+        elif "Less MPG" in minutes_trend and direction_sign == 1:  score -= 2.0
+        elif "More MPG" in minutes_trend and direction_sign == -1: score -= 2.0
+    if min_rank is not None:
+        if min_rank <= 2:   score += 1.5
+        elif min_rank >= 7: score -= 1.0
+    if opportunity_label and opportunity_label not in ("—", "", None):
+        if direction_sign == 1:   score += 2.5
+        elif direction_sign == -1: score -= 1.5
+    if regression_risk:
+        if direction_sign == 1:   score -= 2.0
+        elif direction_sign == -1: score += 1.0
+    effective_hist = hist_stat_tier or hist_tier
+    if direction_sign == 1 and effective_hist:
+        if effective_hist == "PROVEN":    score += 3.0
+        elif effective_hist == "TRENDING": score += 2.0
+        elif effective_hist == "WATCH":    score += 1.0
+    if real_usage_pct is not None:
+        if real_usage_pct >= 0.30:   score += 1.5
+        elif real_usage_pct >= 0.25: score += 0.5
+        elif real_usage_pct <= 0.15: score -= 2.0
+        elif real_usage_pct <= 0.18: score -= 1.0
+    if net_rating_l10 is not None:
+        if net_rating_l10 >= 8.0:    score += 1.5
+        elif net_rating_l10 >= 4.0:  score += 0.5
+        elif net_rating_l10 <= -8.0: score -= 2.5
+        elif net_rating_l10 <= -4.0: score -= 1.5
+    if contract_year and direction_sign == 1: score += 1.0
+    return max(0.0, min(15.0, score))
