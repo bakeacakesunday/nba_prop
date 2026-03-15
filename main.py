@@ -445,72 +445,56 @@ def main() -> None:
 
                 value_rows.append(vrow)
 
-    # ── Compute final_call for each value row ────────────────────────────────
-    # This ensures tracker.save_picks stores the model's actual signal,
-    # not a blank string (which previously made the Picks History meaningless).
-    logger.info("Computing final calls for value rows...")
+    # ── Distribution Analysis (must run before scoring) ──────────────────────
+    logger.info("  Building distribution analysis and hook detection...")
+    from distribution import build_distribution_profile
     for vrow in value_rows:
+        pname    = vrow.get("player_name", "")
         stat     = vrow.get("stat_type", "")
         line_val = float(vrow.get("line", 0))
+        key      = f"{pname}|{vrow.get('team','')}"
+        log      = player_logs.get(key, pd.DataFrame())
+
+        if not log.empty and stat in log.columns:
+            dist = build_distribution_profile(log, stat, line_val)
+        else:
+            dist = {}
+
+        vrow["distribution"] = dist
+
+        hook_score = dist.get("hook_score", 0)
+        if hook_score != 0:
+            vrow["hook_score"]   = hook_score
+            vrow["hook_level"]   = dist.get("hook_level", "—")
+            vrow["hook_warning"] = dist.get("hook_warning", "—")
+
+    # ── Compute edge scores and final calls (mispricedness-anchored model) ─────
+    logger.info("Computing edge scores for value rows...")
+    from scoring import score_from_vrow
+
+    for vrow in value_rows:
         pname    = vrow.get("player_name", "")
+        stat     = vrow.get("stat_type", "")
+        ctx_data = context_by_player.get(pname, {})
 
-        l5_hr_raw  = vrow.get("last5_hit_rate")
-        l10_hr_raw = vrow.get("last10_hit_rate")
-        l20_hr_raw = vrow.get("last20_hit_rate")
+        score_result = score_from_vrow(vrow, ctx_data)
 
-        # Convert "80.0%" strings to floats 0-1
-        def _pct_to_float(v):
-            if v is None or v == "—":
-                return None
-            try:
-                s = str(v).replace("%", "").strip()
-                f = float(s)
-                return f / 100.0 if f > 1.0 else f
-            except (ValueError, TypeError):
-                return None
+        vrow["final_call"]       = score_result["final_call"]
+        vrow["edge_score"]       = score_result["edge_score"]
+        vrow["direction"]        = score_result["direction"]
+        vrow["misprice_score"]   = score_result["misprice_score"]
+        vrow["misprice_label"]   = score_result["misprice_label"]
+        vrow["confidence_score"] = score_result["confidence_score"]
+        vrow["context_score"]    = score_result["context_score"]
+        vrow["role_score"]       = score_result["role_score"]
+        vrow["is_parlay_ready"]  = score_result.get("is_parlay_ready", False)
+        vrow["is_hammer"]        = score_result.get("is_hammer", False)
+        vrow["is_lock"]          = score_result.get("is_lock", False)
 
-        l5_hr  = _pct_to_float(l5_hr_raw)
-        l10_hr = _pct_to_float(l10_hr_raw)
-        l20_hr = _pct_to_float(l20_hr_raw)
-
-        # Compute weighted hit rate
-        avail = [(hr, w) for hr, w in [(l5_hr, 0.45), (l10_hr, 0.35), (l20_hr, 0.20)]
-                 if hr is not None]
-        if avail:
-            total_w = sum(w for _, w in avail)
-            whr = sum(hr * w for hr, w in avail) / total_w
-        else:
-            whr = None
-
-        # Simple final_call derivation based on weighted hit rate and distribution
-        dist = vrow.get("distribution", {})
-        hook = dist.get("hook_level", "")
-        median = dist.get("median_l10")
-
-        if whr is None:
-            final_call = "⚪ Skip"
-        elif "SEVERE" in hook:
-            final_call = "⚪ Skip"
-        elif whr >= 0.75 and median is not None and median > line_val:
-            final_call = "🔥🔥 STRONG OVER"
-        elif whr >= 0.65 and (median is None or median >= line_val):
-            final_call = "✅ BET OVER"
-        elif whr >= 0.55:
-            final_call = "〰 Lean Over"
-        elif whr <= 0.25 and (median is None or median < line_val):
-            final_call = "🔥🔥 STRONG UNDER"
-        elif whr <= 0.35:
-            final_call = "✅ BET UNDER"
-        elif whr <= 0.45:
-            final_call = "〰 Lean Under"
-        else:
-            final_call = "⚪ Skip"
-
-        vrow["final_call"] = final_call
-
-        # Also compute hr_signal and ctx_label for fuller history
+        # hr_signal for history display
+        whr = score_result.get("weighted_hit_rate")
         if whr is not None:
-            hr_pct = round(whr * 100)
+            hr_pct = round(whr)
             if hr_pct >= 75:
                 vrow["hr_signal"] = f"🔥 {hr_pct}% wHR"
             elif hr_pct >= 65:
@@ -522,20 +506,24 @@ def main() -> None:
         else:
             vrow["hr_signal"] = "—"
 
-        ctx_data = context_by_player.get(pname, {})
+        # ctx_label — summary of key contextual modifiers
         ctx_parts = []
         if ctx_data.get("is_back_to_back") == "🔴 YES":
             ctx_parts.append("B2B")
         matchup = ctx_data.get(f"opp_{stat.lower()}_matchup", "")
-        if "🟢" in str(matchup):
+        pos_matchup = ctx_data.get(f"opp_{stat.lower()}_pos_matchup", "")
+        effective_matchup = pos_matchup or matchup
+        if "Soft" in str(effective_matchup):
             ctx_parts.append("Soft D")
-        elif "🔴" in str(matchup):
+        elif "Tough" in str(effective_matchup):
             ctx_parts.append("Tough D")
         trend = ctx_data.get(f"{stat}_trend", "")
         if "📈" in str(trend):
             ctx_parts.append("Hot")
         elif "📉" in str(trend):
             ctx_parts.append("Cold")
+        if score_result.get("veto"):
+            ctx_parts.append("HOOK VETO")
         vrow["ctx_label"] = " | ".join(ctx_parts) if ctx_parts else "Neutral"
 
     # ── 7. Write to Sheets ───────────────────────────────────────────────────
@@ -559,33 +547,11 @@ def main() -> None:
     sheets.write_value_tab(tabs["Value"], value_rows)
     logger.info(f"  ✓ Value ({len(value_rows)} lines analyzed)")
 
-    # ── Distribution Analysis ────────────────────────────────────────────────
-    logger.info("  Building distribution analysis and hook detection...")
-    from distribution import build_distribution_profile
-    for vrow in value_rows:
-        pname    = vrow.get("player_name", "")
-        stat     = vrow.get("stat_type", "")
-        line_val = float(vrow.get("line", 0))
-        key      = f"{pname}|{vrow.get('team','')}"
-        log      = player_logs.get(key, pd.DataFrame())
-
-        if not log.empty and stat in log.columns:
-            dist = build_distribution_profile(log, stat, line_val)
-        else:
-            dist = {}
-
-        vrow["distribution"] = dist
-
-        # Feed hook score back into final call scoring
-        hook_score = dist.get("hook_score", 0)
-        if hook_score != 0:
-            vrow["hook_score"]   = hook_score
-            vrow["hook_level"]   = dist.get("hook_level", "—")
-            vrow["hook_warning"] = dist.get("hook_warning", "—")
-
     sheets.write_distribution_tab(tabs["Distribution"], value_rows)
     hook_warnings = sum(1 for r in value_rows if "HOOK" in str(r.get("distribution", {}).get("hook_level", "")))
+    mispriced_count = sum(1 for r in value_rows if r.get("edge_score", 0) >= 65)
     logger.info(f"  ✓ Distribution ({hook_warnings} hook warnings flagged)")
+    logger.info(f"  ✓ Scoring complete ({mispriced_count} props with strong edge score ≥65)")
 
     # ── Line Shopping ────────────────────────────────────────────────────────
     if raw_props_by_game and player_id_lookup:

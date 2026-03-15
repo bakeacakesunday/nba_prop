@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Prop Tracker</title>
+<style>
+  :root {
+    --bg: #0a0a0f; --surface: #12121a; --border: #1e1e2e;
+    --text: #e2e8f0; --muted: #64748b; --mono: 'SF Mono', 'Fira Code', monospace;
+    --green: #22c55e; --red: #ef4444; --gold: #f59e0b; --purple: #a78bfa;
+    --blue: #60a5fa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; font-size: 13px; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .logo { font-size: 15px; font-weight: 800; letter-spacing: 0.05em; color: var(--text); }
+  .logo span { color: var(--gold); }
+  .refresh-info { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .refresh-btn {
+    background: #1e1e3f; border: 1px solid #4a4a8a; color: var(--purple);
+    font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 4px;
+    cursor: pointer; letter-spacing: 0.05em;
+  }
+  .refresh-btn:hover { background: #2a2a5f; }
+
+  .summary-bar {
+    display: flex; gap: 20px; padding: 8px 20px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    font-size: 11px; color: var(--muted);
+  }
+  .summary-bar strong { color: var(--text); }
+
+  .no-games {
+    text-align: center; padding: 60px 20px; color: var(--muted);
+    font-size: 14px;
+  }
+  .no-games .hint { font-size: 12px; margin-top: 8px; color: #374151; }
+
+  .games-grid { padding: 16px 20px; display: grid; gap: 16px; }
+
+  .game-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+  }
+  .game-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    background: #0d0d18;
+  }
+  .game-matchup { font-weight: 700; font-size: 13px; }
+  .game-score { font-family: var(--mono); font-size: 14px; font-weight: 800; }
+  .game-status { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .live-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green); margin-right: 5px;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .final-label { color: var(--muted); font-size: 11px; }
+
+  .players-table { width: 100%; border-collapse: collapse; }
+  .players-table th {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); padding: 6px 14px; text-align: left;
+    border-bottom: 1px solid var(--border); background: #0d0d18;
+  }
+  .players-table td { padding: 7px 14px; border-bottom: 1px solid #1a1a2a; vertical-align: middle; }
+  .players-table tr:last-child td { border-bottom: none; }
+  .players-table tr:hover td { background: #15152a; }
+  .player-name { font-weight: 600; }
+  .player-team { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+  .stat-val { font-family: var(--mono); font-size: 12px; text-align: right; }
+
+  .prop-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+  .prop-stat {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.06em;
+    padding: 1px 5px; border-radius: 3px; font-family: var(--mono);
+    background: rgba(96,165,250,0.12); border: 1px solid rgba(96,165,250,0.3); color: var(--blue);
+    min-width: 36px; text-align: center;
+  }
+  .prop-progress {
+    flex: 1; height: 6px; background: #1e1e3a; border-radius: 3px; overflow: hidden;
+    min-width: 60px; max-width: 120px;
+  }
+  .prop-progress-fill {
+    height: 100%; border-radius: 3px; transition: width 0.3s ease;
+  }
+  .prop-progress-fill.hit    { background: var(--green); }
+  .prop-progress-fill.near   { background: var(--gold); }
+  .prop-progress-fill.behind { background: var(--red); opacity: 0.6; }
+  .prop-numbers { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .prop-numbers .current { color: var(--text); font-weight: 700; }
+  .prop-numbers .line { color: var(--muted); }
+  .hit-badge {
+    font-size: 9px; font-weight: 900; padding: 1px 5px; border-radius: 3px;
+    background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4); color: var(--green);
+  }
+  .miss-badge {
+    font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px;
+    background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--red);
+  }
+  .tier-prime  { color: #f5a623; font-size: 9px; font-weight: 900; }
+  .tier-strong { color: var(--green); font-size: 9px; font-weight: 900; }
+  .tier-solid  { color: var(--purple); font-size: 9px; font-weight: 900; }
+  .pm-pos { color: var(--green); }
+  .pm-neg { color: var(--red); }
+  .pm-zero { color: var(--muted); }
+  .no-props { color: var(--muted); font-size: 11px; font-style: italic; }
+
+  .filters { padding: 8px 20px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-btn {
+    font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 4px;
+    cursor: pointer; letter-spacing: 0.05em; border: 1px solid var(--border);
+    background: var(--surface); color: var(--muted);
+  }
+  .filter-btn.active { background: #1e1e3f; border-color: var(--purple); color: var(--purple); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">NBA PROPS <span>● LIVE</span></div>
+  <div class="refresh-info" id="refreshInfo">Last updated: —</div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span id="autoRefreshLabel" style="font-size:10px;color:var(--muted)">Auto-refresh: ON</span>
+    <button class="refresh-btn" onclick="loadLive()">↻ REFRESH</button>
+    <button class="refresh-btn" onclick="toggleAutoRefresh()" id="autoBtn">PAUSE</button>
+  </div>
+</header>
+
+<div class="summary-bar" id="summaryBar">
+  <span>Loading live data...</span>
+</div>
+
+<div class="filters">
+  <button class="filter-btn" id="filterAll"    onclick="setFilter('all')"    >All players</button>
+  <button class="filter-btn" id="filterProps"  onclick="setFilter('props')"  >Has props only</button>
+  <button class="filter-btn" id="filterHit"    onclick="setFilter('hit')"    style="color:var(--green)">✅ Hitting</button>
+  <button class="filter-btn" id="filterMiss"   onclick="setFilter('miss')"   style="color:var(--red)"  >❌ Missing</button>
+  <button class="filter-btn" id="filterTiered" onclick="setFilter('tiered')" style="color:var(--gold)" >🎯 Tiered only</button>
+</div>
+
+<div class="games-grid" id="gamesGrid">
+  <div class="no-games">
+    <div>Loading live box scores...</div>
+    <div class="hint">If no games are in progress, check back closer to tip-off.</div>
+  </div>
+</div>
+
+<script>
+var _data = null;
+var _filter = 'props';
+var _autoRefresh = true;
+var _refreshTimer = null;
+var REFRESH_MS = 3 * 60 * 1000; // 3 minutes
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function setFilter(f) {
+  _filter = f;
+  ['all','props','hit','miss','tiered'].forEach(function(k) {
+    var el = document.getElementById('filter' + k.charAt(0).toUpperCase() + k.slice(1));
+    if (el) el.classList.toggle('active', k === f);
+  });
+  if (_data) renderData(_data);
+}
+
+function toggleAutoRefresh() {
+  _autoRefresh = !_autoRefresh;
+  document.getElementById('autoRefreshLabel').textContent = 'Auto-refresh: ' + (_autoRefresh ? 'ON' : 'OFF');
+  document.getElementById('autoBtn').textContent = _autoRefresh ? 'PAUSE' : 'RESUME';
+  if (_autoRefresh) scheduleRefresh();
+  else if (_refreshTimer) clearTimeout(_refreshTimer);
+}
+
+function scheduleRefresh() {
+  if (_refreshTimer) clearTimeout(_refreshTimer);
+  if (_autoRefresh) _refreshTimer = setTimeout(loadLive, REFRESH_MS);
+}
+
+async function loadLive() {
+  try {
+    var r = await fetch('/api/live');
+    var d = await r.json();
+    if (d.status === 'ok') {
+      _data = d;
+      renderData(d);
+      document.getElementById('refreshInfo').textContent =
+        'Last updated: ' + new Date(d.updated_at).toLocaleTimeString();
+    }
+  } catch(e) {
+    console.error('Live fetch failed:', e);
+  }
+  scheduleRefresh();
+}
+
+function renderData(d) {
+  var games = d.games || [];
+  var grid = document.getElementById('gamesGrid');
+
+  // Summary
+  var totalProps = 0, hittingProps = 0, tieredHitting = 0;
+  games.forEach(function(g) {
+    (g.players || []).forEach(function(p) {
+      (p.props || []).forEach(function(pr) {
+        totalProps++;
+        if (pr.hit) { hittingProps++; if (pr.tier) tieredHitting++; }
+      });
+    });
+  });
+  document.getElementById('summaryBar').innerHTML =
+    '<span><strong>' + games.length + '</strong> games live</span>' +
+    '<span><strong>' + totalProps + '</strong> props tracked</span>' +
+    '<span style="color:var(--green)"><strong>' + hittingProps + '</strong> hitting</span>' +
+    '<span style="color:var(--red)"><strong>' + (totalProps - hittingProps) + '</strong> missing</span>' +
+    (tieredHitting ? '<span style="color:var(--gold)"><strong>' + tieredHitting + '</strong> tiered hitting</span>' : '');
+
+  if (!games.length) {
+    grid.innerHTML = '<div class="no-games"><div>No live games right now.</div><div class="hint">Check back when games are in progress.</div></div>';
+    return;
+  }
+
+  grid.innerHTML = games.map(function(g) {
+    var isLive = g.status && !['Final',''].includes(g.status) && g.status !== 'Final';
+    var scoreStr = (g.visitor_team_score != null && g.home_team_score != null)
+      ? (g.visitor_team||'?') + ' ' + g.visitor_team_score + ' — ' + g.home_team_score + ' ' + (g.home_team||'?')
+      : (g.visitor_team||'?') + ' @ ' + (g.home_team||'?');
+
+    // Filter players
+    var players = (g.players || []).filter(function(p) {
+      if (_filter === 'all')    return true;
+      if (_filter === 'props')  return p.props && p.props.length > 0;
+      if (_filter === 'hit')    return p.props && p.props.some(function(pr){ return pr.hit; });
+      if (_filter === 'miss')   return p.props && p.props.some(function(pr){ return !pr.hit; });
+      if (_filter === 'tiered') return p.props && p.props.some(function(pr){ return pr.tier; });
+      return true;
+    });
+
+    if (!players.length && _filter !== 'all') return '';
+
+    var rows = players.map(function(p) {
+      var pm = p.plus_minus;
+      var pmCls = pm > 0 ? 'pm-pos' : pm < 0 ? 'pm-neg' : 'pm-zero';
+      var pmStr = pm != null ? (pm > 0 ? '+' + pm : pm) : '—';
+
+      var propsHtml = '';
+      if (p.props && p.props.length) {
+        propsHtml = p.props.map(function(pr) {
+          var pct = Math.min(pr.pct, 115);
+          var fillCls = pr.hit ? 'hit' : pr.pct >= 75 ? 'near' : 'behind';
+          var tierBadge = pr.tier === 'PRIME'  ? '<span class="tier-prime">PRIME</span>' :
+                          pr.tier === 'STRONG' ? '<span class="tier-strong">STRONG</span>' :
+                          pr.tier === 'SOLID'  ? '<span class="tier-solid">SOLID</span>' : '';
+          var badge = pr.hit
+            ? '<span class="hit-badge">✓ HIT</span>'
+            : '<span class="miss-badge">-' + (pr.remaining > 0 ? pr.remaining.toFixed(1) : '0') + '</span>';
+          return '<div class="prop-row">' +
+            '<span class="prop-stat">' + esc(pr.stat) + '</span>' +
+            '<div class="prop-progress"><div class="prop-progress-fill ' + fillCls + '" style="width:' + Math.min(pct,100) + '%"></div></div>' +
+            '<span class="prop-numbers"><span class="current">' + pr.current + '</span> <span class="line">/ ' + pr.line + '</span></span>' +
+            badge + tierBadge +
+            '</div>';
+        }).join('');
+      } else {
+        propsHtml = '<span class="no-props">no props tonight</span>';
+      }
+
+      var stats = [
+        p.pts != null ? p.pts + ' pts' : null,
+        p.reb != null ? p.reb + ' reb' : null,
+        p.ast != null ? p.ast + ' ast' : null,
+      ].filter(Boolean).join(' · ');
+
+      return '<tr>' +
+        '<td><div class="player-name">' + esc(p.name) + '</div><div class="player-team">' + esc(p.team) + ' · ' + esc(p.min||'0') + ' min</div></td>' +
+        '<td class="stat-val" style="color:var(--muted);font-size:11px">' + esc(stats) + '</td>' +
+        '<td class="stat-val ' + pmCls + '">' + pmStr + '</td>' +
+        '<td>' + propsHtml + '</td>' +
+        '</tr>';
+    }).join('');
+
+    return '<div class="game-card">' +
+      '<div class="game-header">' +
+        '<div>' +
+          '<div class="game-matchup">' + esc(scoreStr) + '</div>' +
+          '<div class="game-status">' + (isLive ? '<span class="live-dot"></span>' : '') + esc(g.status || '') + (g.time ? ' · ' + esc(g.time) : '') + '</div>' +
+        '</div>' +
+        (g.period ? '<div class="game-score">Q' + g.period + '</div>' : '') +
+      '</div>' +
+      (rows ? '<table class="players-table"><thead><tr><th>PLAYER</th><th>LINE</th><th>+/-</th><th>PROPS</th></tr></thead><tbody>' + rows + '</tbody></table>' : '<div style="padding:12px 14px;color:var(--muted);font-size:11px">No tracked players for this game.</div>') +
+      '</div>';
+  }).join('');
+}
+
+// Init
+setFilter('props');
+loadLive();
+</script>
+</body>
+</html>

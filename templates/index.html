@@ -143,6 +143,62 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 .tray-warning.danger { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171; }
 .tray-warning.caution { background:rgba(245,166,35,0.1); border:1px solid rgba(245,166,35,0.3); color:#fbbf24; }
 .tray-warning.good { background:rgba(74,222,128,0.1); border:1px solid rgba(74,222,128,0.3); color:#4ade80; }
+.tray-warning.stat_overlap { background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.35); color:#c084fc; }
+/* ── No-brainer tier badges ─────────────────────────────────────────────── */
+.nb-badge { display:inline-block; font-size:9px; font-weight:900; letter-spacing:0.08em; padding:1px 5px; border-radius:3px; vertical-align:middle; margin-right:4px; }
+.nb-prime  { background:rgba(245,166,35,0.18); border:1px solid rgba(245,166,35,0.5); color:#f5a623; }
+.nb-strong { background:rgba(34,197,94,0.15);  border:1px solid rgba(34,197,94,0.4);  color:#22c55e; }
+.nb-solid  { background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.4); color:#818cf8; }
+/* ── Historical edge tier badges ──────────────────────────────────────────── */
+.hist-proven   { background:rgba(251,191,36,0.18); border:1px solid rgba(251,191,36,0.5); color:#fbbf24; }
+.hist-trending { background:rgba(34,197,94,0.12);  border:1px solid rgba(34,197,94,0.35); color:#4ade80; }
+.hist-watch    { background:rgba(96,165,250,0.12);  border:1px solid rgba(96,165,250,0.35); color:#93c5fd; }
+/* ── Trade alert / context badges ─────────────────────────────────────────── */
+.trade-alert   { background:rgba(239,68,68,0.18);  border:1px solid rgba(239,68,68,0.5);  color:#f87171; }
+.pace-fast     { background:rgba(168,85,247,0.12); border:1px solid rgba(168,85,247,0.35);color:#c084fc; }
+.pace-slow     { background:rgba(107,114,128,0.15);border:1px solid rgba(107,114,128,0.4);color:#9ca3af; }
+.soft-def      { background:rgba(34,197,94,0.12);  border:1px solid rgba(34,197,94,0.35); color:#4ade80; }
+.tough-def     { background:rgba(239,68,68,0.12);  border:1px solid rgba(239,68,68,0.35); color:#f87171; }
+.leader-pill   { background:rgba(251,191,36,0.12); border:1px solid rgba(251,191,36,0.35);color:#fbbf24; }
+/* ── Soft regression warning ────────────────────────────────────────────── */
+.regression-soft { margin:0 12px 6px; padding:5px 8px; border-radius:3px; font-family:var(--mono); font-size:9px; background:#1a1200; border:1px solid #7a6500; color:#fbbf24; }
+/* ── Morning report banner ─────────────────────────────────────────────────── */
+#morningReportBanner { display:none; padding:7px 20px; background:#0d0d18; border-bottom:1px solid #1e1e2e; font-size:11px; }
+/* ── Performance scoreboard ───────────────────────────────────────────────── */
+.sb-stat { display:flex; flex-direction:column; gap:2px; }
+.sb-stat .sb-val { font-size:18px; font-weight:900; font-family:var(--mono); line-height:1; }
+.sb-stat .sb-label { font-size:9px; font-weight:700; letter-spacing:0.06em; color:var(--muted); text-transform:uppercase; }
+.sb-divider { width:1px; background:var(--border); align-self:stretch; }
+/* ── Data quality banner ─────────────────────────────────────────────────── */
+#dqBanner { margin: 8px 20px 0; display: none; }
+.dq-error { background:#1a0808; border:1px solid #7a1111; border-left:3px solid #f87171; color:#f87171; font-size:11px; padding:7px 12px; border-radius:0 4px 4px 0; margin-bottom:4px; }
+.dq-warn  { background:#1a1200; border:1px solid #7a6500; border-left:3px solid #fbbf24; color:#fbbf24; font-size:11px; padding:7px 12px; border-radius:0 4px 4px 0; margin-bottom:4px; }
+.dq-error strong, .dq-warn strong { font-family: var(--mono); }
+/* ── Auto-parlay suggest modal ──────────────────────────────────────────── */
+#suggestModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center; }
+#suggestModal.open { display:flex; }
+#suggestBox { background:#0d0d1a; border:1px solid #2a2a4a; border-radius:8px; width:min(680px,95vw); max-height:85vh; overflow-y:auto; padding:20px; }
+.suggest-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.suggest-title { font-size:15px; font-weight:800; color:var(--text); }
+.suggest-mode-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px; }
+.suggest-mode-a { background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3); }
+.suggest-mode-b { background:rgba(245,166,35,0.15); color:#fbbf24; border:1px solid rgba(245,166,35,0.3); }
+.suggest-tab-bar { display:flex; gap:4px; margin-bottom:12px; border-bottom:1px solid #1e1e38; padding-bottom:8px; }
+.suggest-tab { background:none; border:1px solid #2a2a4a; color:var(--muted2); font-size:11px; font-weight:700; padding:4px 12px; border-radius:4px; cursor:pointer; }
+.suggest-tab.active { background:#1e1e3f; color:#a78bfa; border-color:#4a4a8a; }
+.suggest-parlay-block { display:none; }
+.suggest-parlay-block.active { display:block; }
+.suggest-leg-row { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:#0a0a18; border-radius:4px; margin-bottom:6px; border:1px solid #1a1a2e; cursor:pointer; transition:border-color 0.15s; }
+.suggest-leg-row:hover { border-color:#4a4a8a; }
+.suggest-leg-row.loaded { border-color:#4a4a8a; background:#0f0f24; }
+.suggest-leg-info { flex:1; }
+.suggest-leg-player { font-size:12px; font-weight:700; color:var(--text); }
+.suggest-leg-detail { font-size:10px; color:var(--muted2); margin-top:2px; }
+.suggest-leg-odds { font-size:13px; font-weight:800; color:#a78bfa; font-family:var(--mono); margin:0 12px; }
+.suggest-load-btn { font-size:10px; font-weight:700; padding:4px 10px; border-radius:4px; background:#1a1a3f; border:1px solid #4a4a8a; color:#a78bfa; cursor:pointer; white-space:nowrap; }
+.suggest-load-btn:hover { background:#24244f; }
+.suggest-joint-prob { font-size:11px; color:var(--muted2); margin-bottom:8px; font-family:var(--mono); }
+.suggest-pool-label { font-size:10px; color:var(--muted2); text-transform:uppercase; letter-spacing:0.1em; margin:12px 0 6px; }
 .tray-si-bar { display:flex; align-items:center; gap:8px; padding:6px 10px; background:#0d0d16; border-radius:3px; margin-bottom:6px; }
 .tray-si-label { font-size:10px; color:var(--muted2); text-transform:uppercase; letter-spacing:0.1em; white-space:nowrap; }
 .tray-si-track { flex:1; height:6px; background:#1e1e2e; border-radius:3px; overflow:hidden; }
@@ -317,8 +373,27 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 .book-pill.best     { border-color:var(--green); color:var(--green); }
 .book-pill.shopping { border-color:var(--amber); color:var(--amber); }
 
-/* Card footer */
-.card-sep { height:1px; background:var(--border); margin:0 12px; }
+/* ── Edge Score (mispricedness meter) ────────────────────────────────────── */
+.edge-score-row { display:flex; align-items:center; gap:8px; padding:5px 12px 4px; border-bottom:1px solid var(--border); }
+.edge-score-label { font-family:var(--mono); font-size:9px; color:var(--muted2); text-transform:uppercase; letter-spacing:0.1em; white-space:nowrap; min-width:50px; }
+.edge-score-track { flex:1; height:5px; background:var(--border); border-radius:3px; overflow:hidden; }
+.edge-score-fill { height:100%; border-radius:3px; transition:width 0.4s; }
+.edge-score-fill.tier-prime   { background: linear-gradient(90deg, #f5a623, #ff6b00); }
+.edge-score-fill.tier-strong  { background: #22c55e; }
+.edge-score-fill.tier-bet     { background: #4ade80; }
+.edge-score-fill.tier-lean    { background: #84cc16; }
+.edge-score-fill.tier-skip    { background: var(--muted2); }
+.edge-score-num { font-family:var(--mono); font-size:11px; font-weight:700; min-width:28px; text-align:right; }
+.edge-score-num.tier-prime  { color:#f5a623; }
+.edge-score-num.tier-strong { color:#22c55e; }
+.edge-score-num.tier-bet    { color:#4ade80; }
+.edge-score-num.tier-lean   { color:#84cc16; }
+.edge-score-num.tier-skip   { color:var(--muted2); }
+.edge-breakdown { display:flex; gap:5px; padding:0 12px 5px; flex-wrap:wrap; }
+.eb-pill { font-family:var(--mono); font-size:8px; padding:1px 5px; border-radius:2px; border:1px solid var(--border2); color:var(--muted2); }
+.eb-pill.eb-hi { border-color:#2a3a1a; color:#84cc16; }
+.misprice-badge { font-family:var(--mono); font-size:9px; padding:2px 6px; border-radius:2px; font-weight:700; letter-spacing:0.05em; background:#1a1000; color:#f5a623; border:1px solid #7a5212; white-space:nowrap; }
+.misprice-badge.prime { background:#0a0800; color:#ff8c00; border-color:#f5a623; animation:pulse 2s ease-in-out infinite; }
 .card-footer { display:flex; align-items:center; justify-content:space-between; padding:7px 12px; border-top:1px solid var(--border); background:rgba(255,255,255,0.01); }
 .context-tags { display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
 .ctx-tag { font-family:var(--mono); font-size:9px; padding:2px 5px; border-radius:2px; border:1px solid var(--border2); color:var(--muted); }
@@ -451,13 +526,16 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
     </span>
     <button class="btn" onclick="toggleResults()">📋 RESULTS</button>
     <button class="btn" onclick="toggleChat()">🤖 AI CHAT</button>
+    <a href="/backtest" class="btn" style="text-decoration:none">📊 BACKTEST</a>
     <button class="btn primary" id="refreshBtn" onclick="refreshData()">⟳ REFRESH</button>
   </div>
 </header>
 
-<div class="toolbar">
+<div id="morningReportBanner"></div>
+<div id="dqBanner"></div>
   <span class="filter-label">signal</span>
   <button class="filter-btn active" data-filter="signal" data-val="all"         onclick="setFilter('signal','all',this)">ALL</button>
+  <button class="filter-btn"        data-filter="signal" data-val="mispriced"   onclick="setFilter('signal','mispriced',this)" style="color:#f5a623;font-weight:900;border-color:#7a5212">🎯 MISPRICED</button>
   <button class="filter-btn"        data-filter="signal" data-val="strong"      onclick="setFilter('signal','strong',this)">STRONG</button>
   <button class="filter-btn"        data-filter="signal" data-val="bet"         onclick="setFilter('signal','bet',this)">BET</button>
   <button class="filter-btn"        data-filter="signal" data-val="hammer"      onclick="setFilter('signal','hammer',this)">🔨 HAMMER</button>
@@ -467,8 +545,17 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
   <button class="filter-btn"        data-filter="signal" data-val="lock_under"  onclick="setFilter('signal','lock_under',this)" style="color:#ef4444">🔒 LOCK UNDER</button>
   <button class="filter-btn"        data-filter="signal" data-val="parlay_ready"   onclick="setFilter('signal','parlay_ready',this)"   style="color:#a78bfa;font-weight:800">⚡ PARLAY READY</button>
   <button class="filter-btn"        data-filter="signal" data-val="parlay_consider" onclick="setFilter('signal','parlay_consider',this)" style="color:#818cf8">〰 PARLAY CONSIDER</button>
+  <button class="filter-btn"        data-filter="signal" data-val="nb_tier"         onclick="setFilter('signal','nb_tier',this)"         style="color:#22c55e;font-weight:900;border-color:#14532d">🎯 PRIME/STRONG/SOLID</button>
+  <button class="filter-btn"        data-filter="signal" data-val="hist_edge"        onclick="setFilter('signal','hist_edge',this)"        style="color:#fbbf24;font-weight:900;border-color:#78350f">★ HIST EDGE</button>
+  <button class="filter-btn"        data-filter="signal" data-val="soft_def"         onclick="setFilter('signal','soft_def',this)"         style="color:#4ade80;font-weight:700;border-color:#14532d">🟢 SOFT DEF</button>
+  <button class="filter-btn"        data-filter="signal" data-val="fast_pace"        onclick="setFilter('signal','fast_pace',this)"        style="color:#c084fc;font-weight:700;border-color:#4c1d95">⚡ FAST PACE</button>
+  <button class="filter-btn"        data-filter="signal" data-val="trade_alert"      onclick="setFilter('signal','trade_alert',this)"      style="color:#f87171;font-weight:700;border-color:#7f1d1d">⚠ TRADED?</button>
+  <button class="filter-btn"        data-filter="signal" data-val="playoff_push"     onclick="setFilter('signal','playoff_push',this)"     style="color:#4ade80;font-weight:700;border-color:#14532d">🏆 PLAYOFF PUSH</button>
+  <button class="filter-btn"        data-filter="signal" data-val="tanking"          onclick="setFilter('signal','tanking',this)"          style="color:#f87171;font-weight:700;border-color:#7f1d1d">📉 TANKING</button>
+  <button style="background:#1a1a3f;border:1px solid #4a4a8a;color:#a78bfa;font-size:10px;font-weight:900;padding:4px 10px;border-radius:4px;cursor:pointer;letter-spacing:0.05em" onclick="openSuggestModal()">🪄 AUTO-PARLAY</button>
   <button class="filter-btn"        data-filter="signal" data-val="steam"       onclick="setFilter('signal','steam',this)"       style="color:#e879e9;font-weight:800">🔥 STEAM</button>
   <button class="filter-btn"        data-filter="signal" data-val="best_bets"       onclick="setFilter('signal','best_bets',this)"       style="color:#4ade80;font-weight:800">🎯 BEST BETS</button>
+  <button class="filter-btn"        data-filter="signal" data-val="one_per_player"  onclick="setFilter('signal','one_per_player',this)"  style="color:#c4b5fd;font-weight:800">1️⃣ ONE/PLAYER</button>
   <button class="filter-btn"        data-filter="signal" data-val="shot_indep"      onclick="setFilter('signal','shot_indep',this)"       style="color:#60a5fa">🔗 SHOT-INDEP</button>
   <button class="filter-btn"        data-filter="signal" data-val="pos_trend"       onclick="setFilter('signal','pos_trend',this)"        style="color:#4ade80">📍 POS TREND ✅</button>
   <div class="toolbar-divider"></div>
@@ -544,6 +631,15 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
     </div>
   </aside>
   <div class="cards-area">
+    <!-- ── Model Performance Scoreboard ───────────────────────────────────── -->
+    <div id="performanceScoreboard" style="display:none;padding:10px 20px;background:#0a0a0f;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+        <span style="font-size:9px;font-weight:900;letter-spacing:0.1em;color:var(--muted)">MODEL PERFORMANCE</span>
+        <span id="scoreboardDays" style="font-size:9px;color:var(--muted);font-family:var(--mono)"></span>
+        <a href="/backtest" style="font-size:9px;color:#818cf8;text-decoration:none;margin-left:4px">full report →</a>
+      </div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap" id="scoreboardStats"></div>
+    </div>
     <div class="slate-summary" id="slateSummary" style="display:none"></div>
     <div id="emptyState" class="empty-state">
       <div class="loading-spinner" style="border-top-color:var(--muted2)"></div>
@@ -603,7 +699,130 @@ document.addEventListener('DOMContentLoaded', function() {
     new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
   loadSlate();
   checkStatus();
+  loadMorningReport();
+  loadScoreboard();
 });
+
+async function loadScoreboard() {
+  try {
+    // Fetch graded outcomes summary + CLV in parallel
+    var [btResp, clvResp] = await Promise.all([
+      fetch('/api/backtest'),
+      fetch('/api/clv?days=30'),
+    ]);
+    var bt  = btResp.ok  ? await btResp.json()  : null;
+    var clv = clvResp.ok ? await clvResp.json() : null;
+    if (bt || clv) renderScoreboard(bt, clv);
+  } catch(e) {}
+}
+
+function renderScoreboard(bt, clv) {
+  var el = document.getElementById('performanceScoreboard');
+  var statsEl = document.getElementById('scoreboardStats');
+  if (!el || !statsEl) return;
+
+  var s   = bt && bt.summary ? bt.summary : {};
+  var cs  = clv && clv.summary ? clv.summary : {};
+
+  // Need at least some data to show
+  if (!s.total && !cs.total) return;
+
+  var days = clv && clv.days_back ? clv.days_back : 30;
+  document.getElementById('scoreboardDays').textContent = '(Last ' + days + ' days)';
+
+  function stat(val, label, color, title) {
+    return '<div class="sb-stat" ' + (title ? 'title="' + esc(title) + '"' : '') + '>' +
+      '<span class="sb-val" style="color:' + (color||'var(--text)') + '">' + (val||'—') + '</span>' +
+      '<span class="sb-label">' + label + '</span>' +
+      '</div>';
+  }
+  function divider() { return '<div class="sb-divider"></div>'; }
+
+  var hitColor = s.hit_rate >= 54 ? '#22c55e' : s.hit_rate >= 51 ? '#fbbf24' : s.hit_rate ? '#f87171' : 'var(--muted)';
+  var clvColor = cs.avg_clv > 0 ? '#22c55e' : cs.avg_clv < 0 ? '#f87171' : 'var(--muted)';
+  var beatColor = cs.beat_pct >= 57 ? '#22c55e' : cs.beat_pct >= 52 ? '#fbbf24' : cs.beat_pct ? '#f87171' : 'var(--muted)';
+
+  var pieces = [];
+
+  if (s.total) {
+    pieces.push(stat(s.total.toLocaleString(), 'Props Graded', 'var(--text)',
+      'Total props with graded outcomes in the last ' + days + ' days'));
+    pieces.push(divider());
+    pieces.push(stat(s.hit_rate ? s.hit_rate + '%' : '—', 'Hit Rate', hitColor,
+      'Percentage of props that hit over the last ' + days + ' days. Target: >52%'));
+  }
+
+  if (cs.total) {
+    if (pieces.length) pieces.push(divider());
+    pieces.push(stat(cs.total.toLocaleString(), 'CLV Props', 'var(--text)',
+      'Props with closing line data available for CLV calculation'));
+    pieces.push(divider());
+    pieces.push(stat(
+      cs.avg_clv != null ? (cs.avg_clv > 0 ? '+' : '') + cs.avg_clv + '%' : '—',
+      'Avg CLV', clvColor,
+      'Average closing line value. Positive = model found edge before the market. The proof of edge that matters.'));
+    pieces.push(divider());
+    pieces.push(stat(
+      cs.beat_pct != null ? cs.beat_pct + '%' : '—',
+      'Beat Closing %', beatColor,
+      'Percentage of props where model probability exceeded the closing no-vig probability. >55% = statistically meaningful edge.'));
+  }
+
+  // Tier breakdown if available — show PRIME CLV specifically
+  if (clv && clv.by_tier) {
+    var prime = clv.by_tier.find(function(t){ return t.tier === 'PRIME'; });
+    if (prime && prime.total >= 5) {
+      pieces.push(divider());
+      var primeClvColor = prime.avg_clv > 0 ? '#f5a623' : '#f87171';
+      pieces.push(stat(
+        (prime.avg_clv > 0 ? '+' : '') + prime.avg_clv + '%',
+        'PRIME CLV', primeClvColor,
+        'CLV for PRIME tier props specifically (n=' + prime.total + '). Should be highest tier.'));
+    }
+  }
+
+  statsEl.innerHTML = pieces.join('');
+  el.style.display = 'block';
+}
+
+async function loadMorningReport() {
+  try {
+    var r = await fetch('/api/morning_report');
+    var d = await r.json();
+    if (d.grading && d.grading.total > 0) {
+      renderMorningReport(d);
+    }
+  } catch(e) {}
+}
+
+function renderMorningReport(d) {
+  var el = document.getElementById('morningReportBanner');
+  if (!el) return;
+  var g  = d.grading || {};
+  var la = d.loss_audit || {};
+  var mt = d.model_tuning || {};
+  var clv = d.clv || {};
+
+  var hitColor = (g.hit_rate || 0) >= 52 ? '#22c55e' : (g.hit_rate || 0) >= 48 ? '#fbbf24' : '#f87171';
+  var findings = (mt.findings || []).slice(0, 2);
+
+  // CLV color: positive avg_clv = green, negative = red
+  var clvColor = clv.avg_clv > 0 ? '#22c55e' : clv.avg_clv < 0 ? '#f87171' : '#64748b';
+  var clvStr = clv.avg_clv != null
+    ? (clv.avg_clv > 0 ? '+' : '') + clv.avg_clv + '% CLV (' + (clv.beat_closing_pct||'?') + '% beat closing)'
+    : null;
+
+  el.innerHTML =
+    '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">' +
+    '<span style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:0.05em">📊 YESTERDAY</span>' +
+    '<span style="font-size:12px;font-weight:700;color:' + hitColor + '">' + (g.hit_rate||'—') + '% (' + (g.hits||0) + '/' + (g.total||0) + ')</span>' +
+    (clvStr ? '<span style="font-size:11px;font-weight:700;color:' + clvColor + '">📈 ' + clvStr + '</span>' : '') +
+    (la.fixable_pct ? '<span style="font-size:11px;color:#fbbf24">🔧 ' + la.fixable_pct + '% fixable losses</span>' : '') +
+    findings.map(function(f){ return '<span style="font-size:10px;color:var(--muted)">' + esc(f) + '</span>'; }).join('') +
+    '<a href="/backtest" style="font-size:10px;color:#818cf8;text-decoration:none;margin-left:auto">Full report →</a>' +
+    '</div>';
+  el.style.display = 'block';
+}
 
 async function loadSlate() {
   try {
@@ -615,8 +834,30 @@ async function loadSlate() {
       allGameHeaders = d.game_headers || {};
       renderSidebar();
       renderCards();
+      renderDataQuality(d.data_quality || {});
     }
   } catch(e) {}
+}
+
+function renderDataQuality(dq) {
+  var el = document.getElementById('dqBanner');
+  if (!el) return;
+  var warnings = dq.warnings || [];
+  if (!warnings.length) { el.style.display = 'none'; return; }
+
+  var html = warnings.map(function(w) {
+    var cls = w.level === 'error' ? 'dq-error' : 'dq-warn';
+    var icon = w.level === 'error' ? '🚨' : '⚠️';
+    return '<div class="' + cls + '">' + icon + ' <strong>' + esc(w.code) + '</strong> — ' + esc(w.msg) + '</div>';
+  }).join('');
+
+  // Add spread coverage if partial
+  if (dq.spread_coverage < 80) {
+    html += '<div class="dq-warn">📡 Spread coverage: ' + dq.spread_coverage + '% — blowout risk unavailable for some games. Refresh pipeline after noon.</div>';
+  }
+
+  el.innerHTML = html;
+  el.style.display = 'block';
 }
 
 async function checkStatus() {
@@ -710,6 +951,10 @@ function getFilteredProps() {
     var _activeStatKeys = Object.keys(activeStats); if (_activeStatKeys.length > 0 && !activeStats[p.stat]) return false;
     if (filters.hook === 'warn' && !['SEVERE','WARNING','MILD'].some(function(h){return (p.hook_level||'').includes(h);})) return false;
     if (filters.hook === 'safe' && ['SEVERE','WARNING'].some(function(h){return (p.hook_level||'').includes(h);})) return false;
+    if (filters.signal === 'mispriced') {
+      // Sort by misprice_score desc — show all props with meaningful edge score, sorted by Z-score gap
+      if ((p.edge_score || 0) < 20) return false;
+    }
     if (filters.signal === 'strong'      && Math.abs(p.score) < 3)  return false;
     if (filters.signal === 'bet'         && Math.abs(p.score) < 1.5) return false;
     if (filters.signal === 'hammer'      && !p.hammer)               return false;
@@ -718,20 +963,46 @@ function getFilteredProps() {
     if (filters.signal === 'unders'      && p.score > -0.8)          return false;
     if (filters.signal === 'lock_under'  && !p.lock_under)           return false;
     if (filters.signal === 'parlay_ready') {
-      // Every gate must pass — one failure disqualifies
+      // Accept new no_brainer_tier props (PRIME/STRONG/SOLID) OR legacy parlay-ready gate
+      if (p.no_brainer_tier) return true;  // tier system passes — accept immediately
+      // Legacy gate (kept for backward compat with cached data without tier field)
       var _SI = ['REB','AST','RA','BLK','STL','TOV'];
-      if (_SI.indexOf((p.stat||'').toUpperCase()) < 0)               return false; // must be shot-independent
-      if (!p.lock)                                                    return false; // must be Lock
+      if (_SI.indexOf((p.stat||'').toUpperCase()) < 0)               return false;
+      if (!p.lock)                                                    return false;
       var _gap = p.median != null ? p.median - p.line : null;
-      if (_gap == null || _gap < 1.5)                                return false; // median gap ≥ +1.5
-      if (p.true_over_pct == null || p.true_over_pct < 65)           return false; // true over ≥ 65%
-      // near-miss is advisory only, not a hard gate
+      if (_gap == null || _gap < 1.5)                                return false;
+      if (p.true_over_pct == null || p.true_over_pct < 65)           return false;
       var _l5 = p.l5_values || [];
       var _pr_misses = _l5.filter(function(v){ return v <= p.line; }).length;
-      if (_pr_misses > 1)                                             return false; // max 1 miss in L5
-      if (p.days_rest != null && p.days_rest < 2)                    return false; // no 1d rest
+      if (_pr_misses > 1)                                             return false;
+      if (p.days_rest != null && p.days_rest < 2)                    return false;
       var _hook = p.hook_level || '';
-      if (['REGRESSION','hot','SEVERE','WARNING'].some(function(h){ return _hook.toLowerCase().includes(h.toLowerCase()); })) return false; // no regression/hot flags
+      if (['REGRESSION','hot','SEVERE','WARNING'].some(function(h){ return _hook.toLowerCase().includes(h.toLowerCase()); })) return false;
+    }
+    if (filters.signal === 'nb_tier') {
+      // Show only PRIME / STRONG / SOLID no-brainer tier props
+      if (!p.no_brainer_tier) return false;
+    }
+    if (filters.signal === 'hist_edge') {
+      if (!p.hist_tier) return false;
+    }
+    if (filters.signal === 'soft_def') {
+      // Opponent allows 6%+ more than league average for this stat
+      var _la = p.stat==='PTS'?111:p.stat==='REB'?44:p.stat==='AST'?25:p.stat==='FG3M'?13.5:null;
+      var _oa = p.stat==='PTS'?p.opp_pts_allowed:p.stat==='REB'?p.opp_reb_allowed:p.stat==='AST'?p.opp_ast_allowed:p.stat==='FG3M'?p.opp_fg3m_allowed:null;
+      if (!_la || !_oa || (_oa - _la) / _la < 0.06) return false;
+    }
+    if (filters.signal === 'fast_pace') {
+      if (!p.game_pace || (p.game_pace - 98.5) < 3.5) return false;
+    }
+    if (filters.signal === 'trade_alert') {
+      if (!p.trade_alert) return false;
+    }
+    if (filters.signal === 'playoff_push') {
+      if (!p.playoff_push) return false;
+    }
+    if (filters.signal === 'tanking') {
+      if (!p.tanking) return false;
     }
     if (filters.signal === 'parlay_consider') {
       // Relaxed gates — catches strong props just below Lock threshold
@@ -761,6 +1032,7 @@ function getFilteredProps() {
       if (!mv.steam_move && !mv.sharp_move) return false;
     }
     if (filters.signal === 'best_bets')  { if (!p.lock && !p.hammer && (p.score||0) < 2) return false; }
+    if (filters.signal === 'one_per_player') { if (!p.best_prop_for_player) return false; }
     if (filters.signal === 'shot_indep') { var _SI3 = ['REB','AST','RA','BLK','STL','TOV']; if (_SI3.indexOf((p.stat||'').toUpperCase()) < 0) return false; }
     if (filters.signal === 'pos_trend')  { if (p.pos_line_hit_rate == null || p.pos_line_total == null || p.pos_line_total < 3 || p.pos_line_hit_rate < 60) return false; }
     // Minutes filter — uses minutes_l5_avg which is always present
@@ -777,6 +1049,15 @@ function getFilteredProps() {
 
 function renderCards() {
   var props = getFilteredProps();
+
+  // Sort by edge_score (desc) when MISPRICED filter active, otherwise keep existing score sort
+  // Always use edge_score as primary sort if available, fall back to legacy score
+  props.sort(function(a, b) {
+    var aScore = (a.edge_score != null) ? a.edge_score : Math.abs(a.score || 0) * 20;
+    var bScore = (b.edge_score != null) ? b.edge_score : Math.abs(b.score || 0) * 20;
+    return bScore - aScore;
+  });
+
   var grid  = document.getElementById('cardsGrid');
   var empty = document.getElementById('emptyState');
   document.getElementById('countBadge').innerHTML = '<strong>' + props.length + '</strong> props';
@@ -1005,6 +1286,118 @@ function buildCard(p) {
   // ── RESEARCH SUMMARY — synthesized plain-English one-liner ──────────────
   var summary = buildResearchSummary(p);
   if (summary) h += '<div class="research-summary">' + summary + '</div>';
+
+  // ── PERCENTILE STRIP — visual distribution spine ──────────────────────────
+  // Shows P10/P25/P50/P75/P90 anchored to the line, with key probability callouts.
+  // The line position within the distribution tells you more than median alone.
+  if (p.pct_p10 != null && p.pct_p50 != null && p.pct_p90 != null) {
+    var pLine  = p.line;
+    var pMin   = Math.min(p.pct_p10, pLine) * 0.85;
+    var pMax   = Math.max(p.pct_p90, pLine) * 1.10;
+    var pRange = Math.max(pMax - pMin, 1);
+
+    function pctPos(v) { return Math.max(0, Math.min(100, (v - pMin) / pRange * 100)).toFixed(1); }
+
+    var linePos = pctPos(pLine);
+    var p10pos  = pctPos(p.pct_p10);
+    var p25pos  = pctPos(p.pct_p25 != null ? p.pct_p25 : p.pct_p10);
+    var p50pos  = pctPos(p.pct_p50);
+    var p75pos  = pctPos(p.pct_p75 != null ? p.pct_p75 : p.pct_p90);
+    var p90pos  = pctPos(p.pct_p90);
+
+    // IQR fill color: green if median well above line, amber if close, red if below
+    var iqrColor = (p.pct_p50 > pLine + 1) ? 'rgba(34,197,94,0.18)'
+                 : (p.pct_p50 >= pLine)     ? 'rgba(251,191,36,0.15)'
+                 :                            'rgba(239,68,68,0.15)';
+    var medColor = (p.pct_p50 > pLine + 1) ? '#22c55e'
+                 : (p.pct_p50 >= pLine)     ? '#fbbf24' : '#f87171';
+
+    // Spike tag
+    var spikeTag = '';
+    if (p.spike_ratio != null) {
+      if (p.spike_ratio >= 1.8)      spikeTag = '<span style="font-size:8px;color:#f5a623;margin-left:6px">⬆ SPIKER ('+p.spike_ratio.toFixed(1)+'×)</span>';
+      else if (p.spike_ratio <= 0.65) spikeTag = '<span style="font-size:8px;color:#f87171;margin-left:6px">⬇ FLOOR RISK ('+p.spike_ratio.toFixed(1)+'×)</span>';
+    }
+
+    // Probability callouts
+    var probStr = '';
+    if (p.prob_over != null) {
+      var poColor = p.prob_over >= 0.65 ? '#22c55e' : p.prob_over >= 0.50 ? '#fbbf24' : '#f87171';
+      probStr += '<span style="color:'+poColor+';font-weight:700">' + Math.round(p.prob_over*100) + '%</span><span style="color:var(--muted)"> over</span>';
+    }
+    if (p.prob_over_plus1 != null) {
+      probStr += ' <span style="color:var(--muted)">/ </span><span style="color:var(--muted2)">' + Math.round(p.prob_over_plus1*100) + '% +1</span>';
+    }
+    if (p.prob_under_minus2 != null && p.prob_under_minus2 >= 0.15) {
+      probStr += ' <span style="color:var(--muted)">/ </span><span style="color:#f87171">' + Math.round(p.prob_under_minus2*100) + '% floor</span>';
+    }
+    if (p.tail_risk_low != null && p.tail_risk_low >= 0.15) {
+      probStr += ' <span style="color:#f87171;font-size:8px">⚠ tail ' + Math.round(p.tail_risk_low*100) + '%</span>';
+    }
+
+    h += '<div style="padding:5px 12px 6px;border-bottom:1px solid var(--border)">';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">';
+    h += '<span style="font-size:8px;font-weight:700;letter-spacing:0.08em;color:var(--muted)">DISTRIBUTION</span>';
+    h += '<span style="font-size:9px;font-family:var(--mono)">' + probStr + '</span>';
+    h += spikeTag;
+    h += '</div>';
+
+    // The spine — a mini track with percentile markers
+    h += '<div style="position:relative;height:22px;margin:0 4px">';
+    // Full range bar (background)
+    h += '<div style="position:absolute;top:9px;left:0;right:0;height:4px;background:var(--border);border-radius:2px"></div>';
+    // IQR fill (P25-P75)
+    var iqrLeft  = parseFloat(p25pos);
+    var iqrWidth = Math.max(0, parseFloat(p75pos) - iqrLeft);
+    h += '<div style="position:absolute;top:9px;left:'+iqrLeft+'%;width:'+iqrWidth+'%;height:4px;background:'+iqrColor+';border:1px solid '+medColor+'40"></div>';
+    // P10 tick
+    h += '<div style="position:absolute;top:6px;left:'+p10pos+'%;width:2px;height:10px;background:#64748b;border-radius:1px"></div>';
+    h += '<div style="position:absolute;top:18px;left:'+p10pos+'%;transform:translateX(-50%);font-size:7px;color:var(--muted);font-family:var(--mono)">'+p.pct_p10+'</div>';
+    // P50 tick (median — prominent)
+    h += '<div style="position:absolute;top:4px;left:'+p50pos+'%;width:3px;height:14px;background:'+medColor+';border-radius:1px;transform:translateX(-50%)"></div>';
+    h += '<div style="position:absolute;top:18px;left:'+p50pos+'%;transform:translateX(-50%);font-size:7px;color:'+medColor+';font-family:var(--mono);font-weight:700">'+p.pct_p50+'</div>';
+    // P90 tick
+    h += '<div style="position:absolute;top:6px;left:'+p90pos+'%;width:2px;height:10px;background:#64748b;border-radius:1px"></div>';
+    h += '<div style="position:absolute;top:18px;left:'+p90pos+'%;transform:translateX(-50%);font-size:7px;color:var(--muted);font-family:var(--mono)">'+p.pct_p90+'</div>';
+    // Line marker — the key reference point
+    h += '<div style="position:absolute;top:2px;left:'+linePos+'%;width:2px;height:18px;background:#f5a623;border-radius:1px;transform:translateX(-50%)"></div>';
+    h += '<div style="position:absolute;top:-1px;left:'+linePos+'%;transform:translateX(-50%);font-size:7px;color:#f5a623;font-family:var(--mono);font-weight:900;white-space:nowrap">LINE '+pLine+'</div>';
+    h += '</div>';  // spine
+    h += '</div>';  // container
+  }
+
+  // ── EDGE SCORE METER — mispricedness-anchored composite ─────────────────
+  if (p.edge_score != null) {
+    var es = p.edge_score;
+    var esTier = es >= 80 ? 'prime' : es >= 65 ? 'strong' : es >= 52 ? 'bet' : es >= 40 ? 'lean' : 'skip';
+    var esWidth = Math.round(es) + '%';
+    var mScore = p.misprice_score || 0;
+    var cScore = p.confidence_score || 0;
+    var ctxScore = p.context_score || 0;
+    var rScore = p.role_score || 0;
+    var mLabel = p.misprice_label || '';
+    // Misprice badge — only show if meaningful
+    var mpBadge = '';
+    if (mScore >= 28) {
+      mpBadge = '<span class="misprice-badge prime">🎯 MISPRICED ' + (mLabel.indexOf('Z=') >= 0 ? mLabel.split('—')[0].trim() : '') + '</span>';
+    } else if (mScore >= 16) {
+      mpBadge = '<span class="misprice-badge">' + (mLabel.indexOf('Z=') >= 0 ? '🎯 ' + mLabel.split('—')[0].trim() : '🎯 Edge') + '</span>';
+    }
+    h += '<div class="edge-score-row">';
+    h += '<span class="edge-score-label">EDGE</span>';
+    h += '<div class="edge-score-track"><div class="edge-score-fill tier-' + esTier + '" style="width:' + esWidth + '"></div></div>';
+    h += '<span class="edge-score-num tier-' + esTier + '">' + Math.round(es) + '</span>';
+    if (mpBadge) h += mpBadge;
+    h += '</div>';
+    // Score breakdown pills
+    h += '<div class="edge-breakdown">';
+    var mCl2 = mScore >= 28 ? 'eb-hi' : '';
+    h += '<span class="eb-pill ' + mCl2 + '">MISPRICE ' + Math.round(mScore) + '/40</span>';
+    h += '<span class="eb-pill ' + (cScore >= 18 ? 'eb-hi' : '') + '">CONF ' + Math.round(cScore) + '/25</span>';
+    h += '<span class="eb-pill ' + (ctxScore >= 15 ? 'eb-hi' : '') + '">CTX ' + Math.round(ctxScore) + '/20</span>';
+    h += '<span class="eb-pill ' + (rScore >= 12 ? 'eb-hi' : '') + '">ROLE ' + Math.round(rScore) + '/15</span>';
+    h += '</div>';
+  }
 
   // ── SIGNAL STRIP — all key signals in one scannable row ─────────────────
   h += buildSignalStrip(p);
@@ -1256,6 +1649,104 @@ function buildSignalStrip(p) {
   // One compact row of green/amber/red pills — lets you scan a card in 2 seconds
   var pills = [];
 
+  // No-brainer tier — show first if present
+  if (p.no_brainer_tier) {
+    var tierCls = p.no_brainer_tier === 'PRIME'  ? 'nb-badge nb-prime'  :
+                  p.no_brainer_tier === 'STRONG' ? 'nb-badge nb-strong' : 'nb-badge nb-solid';
+    pills.push('<span class="' + tierCls + '">' + p.no_brainer_tier + '</span>');
+  }
+
+  // Historical edge tier — book has consistently underpriced this player
+  if (p.hist_tier) {
+    var histCls = p.hist_tier === 'PROVEN'   ? 'nb-badge hist-proven'   :
+                  p.hist_tier === 'TRENDING' ? 'nb-badge hist-trending' : 'nb-badge hist-watch';
+    var histLabel = p.hist_tier === 'PROVEN'   ? '★ PROVEN'   :
+                    p.hist_tier === 'TRENDING' ? '↑ TRENDING' : '~ WATCH';
+    var histTitle = (p.hist_hit_rate || '') + '% hit rate · ' + (p.hist_sample || '') + ' graded';
+    // Show stat-specific badge if available, otherwise general player badge
+    if (p.hist_stat_tier) {
+      histTitle = p.stat + ': ' + (p.hist_stat_hr || '') + '% · ' + (p.hist_stat_n || '') + ' graded';
+    }
+    pills.push('<span class="' + histCls + '" title="' + esc(histTitle) + '">' + histLabel + '</span>');
+  }
+
+  // Contract year — walk-year motivation signal
+  if (p.contract_year) {
+    pills.push('<span class="nb-badge" style="background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.35);color:#fbbf24" title="Player is in final contract year — walk-year motivation">💰 CONTRACT YR</span>');
+  }
+
+  // Confirmed starter / bench (once lineups post)
+  if (p.confirmed_starter === true) {
+    pills.push('<span class="nb-badge" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.35);color:#4ade80" title="Confirmed starter for tonight">✓ STARTER</span>');
+  } else if (p.confirmed_starter === false) {
+    pills.push('<span class="nb-badge" style="background:rgba(239,68,68,0.18);border:1px solid rgba(239,68,68,0.5);color:#f87171" title="Confirmed bench — parlay blocked">🚫 BENCH</span>');
+  }
+
+  // Playoff push — team playing for their playoff life, starters go full minutes
+  if (p.playoff_push) {
+    pills.push('<span class="nb-badge" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.35);color:#4ade80" title="Team fighting for playoff spot (conf rank #' + (p.team_conf_rank||'?') + ') — full minutes expected">🏆 PLAYOFF PUSH</span>');
+  }
+
+  // Tanking — team may deliberately rest starters
+  if (p.tanking) {
+    pills.push('<span class="nb-badge" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#f87171" title="Team likely tanking (conf rank #' + (p.team_conf_rank||'?') + ') — rest risk">📉 TANKING</span>');
+  }
+
+  // Home/road split warning
+  if (p.location_win_pct != null && !p.is_home_game && p.road_win_pct != null && p.road_win_pct < 0.35) {
+    pills.push('<span class="nb-badge" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#f87171" title="Poor road team (' + Math.round(p.road_win_pct*100) + '% road win%)">✈️ BAD ROAD TEAM</span>');
+  }
+
+  // Trade alert — player's current team doesn't match prop team
+  if (p.trade_alert && p.current_team_bdl) {
+    pills.push('<span class="nb-badge trade-alert" title="BDL active roster shows ' + esc(p.current_team_bdl) + ' — prop data may be stale">⚠ TRADED?</span>');
+  }
+
+  // League leader rank
+  if (p.stat_leader_rank && p.stat_leader_rank <= 10) {
+    var rankLabel = p.stat_leader_rank <= 3 ? '🏆 #' + p.stat_leader_rank + ' ' + (p.stat||'') :
+                    '⭐ Top-10 ' + (p.stat||'');
+    pills.push('<span class="nb-badge leader-pill" title="League rank #' + p.stat_leader_rank + ' in ' + esc(p.stat||'') + ' this season">' + rankLabel + '</span>');
+  }
+
+  // Game pace context
+  if (p.game_pace) {
+    var paceVsAvg = p.game_pace - 98.5;
+    if (paceVsAvg >= 3.5) {
+      pills.push('<span class="nb-badge pace-fast" title="Fast pace: ' + p.game_pace.toFixed(1) + ' poss/48min">⚡ FAST PACE</span>');
+    } else if (paceVsAvg <= -3.5) {
+      pills.push('<span class="nb-badge pace-slow" title="Slow pace: ' + p.game_pace.toFixed(1) + ' poss/48min">🐢 SLOW PACE</span>');
+    }
+  }
+
+  // Opponent defense quality (from real BDL allowed data)
+  var _oppAllowed = p.stat === 'PTS' ? p.opp_pts_allowed :
+                    p.stat === 'REB' ? p.opp_reb_allowed :
+                    p.stat === 'AST' ? p.opp_ast_allowed :
+                    p.stat === 'FG3M'? p.opp_fg3m_allowed : null;
+  var _lgAvg = p.stat === 'PTS' ? 111.0 : p.stat === 'REB' ? 44.0 :
+               p.stat === 'AST' ? 25.0  : p.stat === 'FG3M'? 13.5 : null;
+  if (_oppAllowed && _lgAvg) {
+    var _defPct = (_oppAllowed - _lgAvg) / _lgAvg;
+    if (_defPct >= 0.06) {
+      pills.push('<span class="nb-badge soft-def" title="Opp allows ' + _oppAllowed.toFixed(1) + ' ' + esc(p.stat||'') + '/g (lg avg ' + _lgAvg + ')">🟢 SOFT DEF</span>');
+    } else if (_defPct <= -0.06) {
+      pills.push('<span class="nb-badge tough-def" title="Opp allows ' + _oppAllowed.toFixed(1) + ' ' + esc(p.stat||'') + '/g (lg avg ' + _lgAvg + ')">🔴 TOUGH DEF</span>');
+    }
+  }
+
+  // Outlier inflation — recent monster game masking weak baseline
+  if (p.outlier_inflated) {
+    var trueHr = p.true_l5_hr != null ? ' (true L5: ' + p.true_l5_hr.toFixed(0) + '%)' : '';
+    pills.push('<span class="sig-pill sig-bad" title="' + esc(p.outlier_note||'') + '">📈 OUTLIER' + trueHr + '</span>');
+  }
+
+  // Parlay DQ — if disqualified, make it loud and obvious in the strip
+  if (p.parlay_disqualified) {
+    var dqReason = (p.parlay_disqualify_reason || 'DQ').replace(/^[A-Z_]+:\s*/, '').slice(0, 40);
+    pills.push('<span class="sig-pill sig-bad" title="' + esc(p.parlay_disqualify_reason || '') + '">🚫 PARLAY DQ</span>');
+  }
+
   // Cross-window hit rate
   var hrs   = [p.l5_hr,p.l10_hr,p.l20_hr].filter(function(x){return x!=null;});
   var avgHr = hrs.length ? hrs.reduce(function(a,b){return a+b;},0)/hrs.length : null;
@@ -1309,6 +1800,25 @@ function buildSignalStrip(p) {
     pills.push('<span class="sig-pill sig-ghost">GHOST ' + p.ghost_rate.toFixed(0) + '%</span>');
   }
 
+  // Spike ratio — asymmetry signal from percentile profile
+  if (p.spike_ratio != null) {
+    if (p.spike_ratio >= 1.8) {
+      pills.push('<span class="sig-pill sig-good">⬆ SPIKER ' + p.spike_ratio.toFixed(1) + '×</span>');
+    } else if (p.spike_ratio <= 0.65) {
+      pills.push('<span class="sig-pill sig-bad">⬇ FLOOR RISK</span>');
+    }
+  }
+
+  // Tail risk — catastrophic under probability
+  if ((p.tail_risk_low||0) >= 0.20) {
+    pills.push('<span class="sig-pill sig-bad">TAIL ' + Math.round(p.tail_risk_low*100) + '%</span>');
+  }
+
+  // Comfortable over — clears the line with margin
+  if (p.prob_over_plus1 != null && p.prob_over_plus1 >= 0.65 && (p.direction === 'OVER' || !p.direction)) {
+    pills.push('<span class="sig-pill sig-good">CLEARS +1 ' + Math.round(p.prob_over_plus1*100) + '%</span>');
+  }
+
   // Positional mismatch bonus
   if (p.pos_mismatch && p.player_position) {
     pills.push('<span class="sig-pill sig-good">🎯 POS MISMATCH</span>');
@@ -1326,6 +1836,14 @@ function buildSignalStrip(p) {
     var minCl = p.minutes_l5_avg >= 30 ? 'sig-good' : p.minutes_l5_avg >= 22 ? 'sig-warn' : 'sig-bad';
     var minRank = p.min_rank ? ' (#' + p.min_rank + ')' : '';
     pills.push('<span class="sig-pill ' + minCl + '">' + p.minutes_l5_avg.toFixed(0) + ' MPG' + minRank + '</span>');
+  }
+
+  // Line credibility — line/std ratio. <1.0 = trap line (inside 1 std dev)
+  if (p.line_credibility != null) {
+    var lc = p.line_credibility;
+    var lcCl = lc < 0.75 ? 'sig-bad' : lc < 1.0 ? 'sig-warn' : lc >= 1.5 ? 'sig-good' : 'sig-neutral';
+    var lcLabel = lc < 0.75 ? '⚠ TRAP' : lc < 1.0 ? 'CRED ' + lc.toFixed(2) : 'CRED ' + lc.toFixed(2);
+    pills.push('<span class="sig-pill ' + lcCl + '" title="line / std_l10 — below 1.0 means line sits inside one std dev (trap)">' + lcLabel + '</span>');
   }
 
   // Line movement — steam / sharp money is a strong forward-looking signal
@@ -1346,7 +1864,11 @@ function buildTopWarning(p) {
   // Only the single most critical warning — no more stacking banners.
   // Priority: regression > extreme blowout > severe hook > ghost high > high blowout > warning hook > low mins > running hot > mild
   if (p.regression_risk)
-    return '<div class="regression-warning">🚨 REGRESSION RISK: ' + esc(p.regression_note) + ' — fade or skip</div>';
+    return '<div class="regression-warning">🚨 REGRESSION RISK: ' + esc(p.regression_note) + ' — hard fade</div>';
+  if (p.outlier_inflated)
+    return '<div class="regression-warning">📈 OUTLIER INFLATED: ' + esc(p.outlier_note) + '</div>';
+  if (p.regression_soft)
+    return '<div class="regression-soft">⚠ Running hot (+' + (p.regression_gap||'') + '% L5 vs L20) — soft risk, parlay-eligible</div>';
 
   var blLevel = p.blowout_level || '';
   var blCtx   = p.blowout_context || p.blowout_label || '';
@@ -1707,6 +2229,9 @@ function buildTrayLegsHTML(legs, analysis, loading) {
         : '<span style="color:#fbbf24;font-size:10px">〰 MIXED</span>';
     var oddsStr = p.odds != null ? (p.odds > 0 ? '+' + p.odds : '' + p.odds) : '';
     var lockBadge = p.lock ? '<span style="color:#4ade80;font-size:10px">🔒</span> ' : '';
+    var tierBadge = p.no_brainer_tier
+      ? '<span class="nb-badge ' + (p.no_brainer_tier==='PRIME'?'nb-prime':p.no_brainer_tier==='STRONG'?'nb-strong':'nb-solid') + '">' + p.no_brainer_tier + '</span>'
+      : '';
 
     // Per-leg weighted hit prob from game script if available
     var gsHit = '';
@@ -1720,7 +2245,7 @@ function buildTrayLegsHTML(legs, analysis, loading) {
 
     html += '<div class="tray-leg">';
     html += '<div class="tray-leg-info">';
-    html += '<div class="tray-leg-player">'+esc(p.player_name)+'</div>';
+    html += '<div class="tray-leg-player">' + tierBadge + esc(p.player_name) + '</div>';
     html += '<div class="tray-leg-detail">'+lockBadge+esc(p.team)+' vs '+esc(p.opponent)+' · '+esc(p.stat)+' '+profilePill+gsHit+'</div>';
     html += '</div>';
     html += '<span class="tray-leg-stat">O'+p.line+' <span style="color:var(--muted2);font-size:11px">'+oddsStr+'</span></span>';
@@ -1729,6 +2254,173 @@ function buildTrayLegsHTML(legs, analysis, loading) {
   });
 
   return html;
+}
+
+// ── Auto-Parlay Suggest Modal ─────────────────────────────────────────────
+var _suggestData = null;
+
+async function openSuggestModal() {
+  var modal = document.getElementById('suggestModal');
+  var box   = document.getElementById('suggestBox');
+  modal.classList.add('open');
+  box.innerHTML = '<div style="color:var(--muted2);font-size:12px;padding:20px 0;text-align:center">⟳ Building tonight\'s parlays...</div>';
+
+  try {
+    var resp = await fetch('/api/parlay_suggest');
+    if (!resp.ok) throw new Error(await resp.text());
+    _suggestData = await resp.json();
+    renderSuggestModal(_suggestData);
+  } catch(e) {
+    box.innerHTML = '<div style="color:#f87171;padding:12px">Error: ' + esc(String(e)) + '</div>'
+      + '<button onclick="closeSuggestModal()" style="margin-top:10px;padding:6px 14px;background:#1a1a2e;border:1px solid #3a3a5a;color:var(--muted);border-radius:4px;cursor:pointer">Close</button>';
+  }
+}
+
+function closeSuggestModal() {
+  document.getElementById('suggestModal').classList.remove('open');
+}
+
+function renderSuggestModal(data) {
+  var box    = document.getElementById('suggestBox');
+  var mode   = data.mode || 'A-tier';
+  var parlays = data.parlays || {};
+  var pool    = data.pool || [];
+
+  var modeCls = mode === 'B-tier' ? 'suggest-mode-badge suggest-mode-b' : 'suggest-mode-badge suggest-mode-a';
+  var modeNote = mode === 'B-tier'
+    ? '⚠ Thin slate — B-tier mode (L5≥70, L10≥60). Reduce unit size.'
+    : '';
+
+  var html = '<div class="suggest-header">';
+  html += '<div class="suggest-title">🪄 Tonight\'s Auto-Parlays</div>';
+  html += '<div style="display:flex;align-items:center;gap:8px">';
+  html += '<span class="' + modeCls + '">' + mode + '</span>';
+  html += '<button onclick="closeSuggestModal()" style="background:none;border:none;color:var(--muted2);font-size:16px;cursor:pointer;padding:0 4px">✕</button>';
+  html += '</div></div>';
+
+  if (modeNote) {
+    html += '<div style="background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);color:#fbbf24;font-size:11px;padding:6px 10px;border-radius:4px;margin-bottom:12px">' + modeNote + '</div>';
+  }
+
+  // Tab bar
+  var nLegs = Object.keys(parlays).sort();
+  if (!nLegs.length) {
+    html += '<div style="color:var(--muted2);font-size:12px;padding:12px 0">No qualifying parlays found for tonight.</div>';
+  } else {
+    html += '<div class="suggest-tab-bar" id="suggestTabs">';
+    nLegs.forEach(function(n, i) {
+      var p = parlays[n];
+      var prob = p.joint_l10 ? p.joint_l10.toFixed(0) + '%' : '';
+      html += '<button class="suggest-tab' + (i===0?' active':'') + '" onclick="switchSuggestTab(\'' + n + '\')">'
+            + n + '-LEG <span style="font-weight:400;color:var(--muted2)">(' + prob + ')</span></button>';
+    });
+    html += '</div>';
+
+    // Parlay blocks
+    nLegs.forEach(function(n, i) {
+      var p = parlays[n];
+      html += '<div class="suggest-parlay-block' + (i===0?' active':'') + '" id="suggestBlock-' + n + '">';
+
+      // Joint prob + load button
+      var tierLabel = (p.leg_cards||[]).map(function(l){ return l.no_brainer_tier||'B'; }).join(' + ');
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+      html += '<div class="suggest-joint-prob">Joint L10: <strong style="color:#22c55e">' + (p.joint_l10||0).toFixed(1) + '%</strong>'
+            + ' &nbsp;·&nbsp; Avg odds: <strong style="color:#a78bfa">' + (p.avg_odds > 0 ? '+' : '') + (p.avg_odds||0) + '</strong>'
+            + ' &nbsp;·&nbsp; <span style="color:var(--muted2)">' + tierLabel + '</span></div>';
+      html += '<button class="suggest-load-btn" onclick="loadSuggestParlay(' + n + ')">Load into Tray →</button>';
+      html += '</div>';
+
+      // Leg rows
+      (p.leg_cards||[]).forEach(function(leg) {
+        var t = leg.no_brainer_tier;
+        var tBadge = t ? '<span class="nb-badge ' + (t==='PRIME'?'nb-prime':t==='STRONG'?'nb-strong':'nb-solid') + '">' + t + '</span>' : '';
+        var softFlag = leg.regression_soft ? ' <span style="color:#fbbf24;font-size:9px">⚠ hot</span>' : '';
+        var oddsStr = leg.odds != null ? (leg.odds > 0 ? '+' + leg.odds : '' + leg.odds) : '—';
+        var l10cl = (leg.l10_hr||0) >= 80 ? '#22c55e' : (leg.l10_hr||0) >= 65 ? '#fbbf24' : '#f87171';
+        html += '<div class="suggest-leg-row" onclick="loadSuggestSingleLeg(\'' + esc(leg.key||'') + '\')">';
+        html += '<div class="suggest-leg-info">';
+        html += '<div class="suggest-leg-player">' + tBadge + esc(leg.player_name||'') + softFlag + '</div>';
+        html += '<div class="suggest-leg-detail">' + esc(leg.team||'') + ' vs ' + esc(leg.opponent||'')
+              + ' · ' + esc(leg.stat||'') + ' O' + (leg.line||'')
+              + ' · L5:<strong>' + (leg.l5_hr||0).toFixed(0) + '%</strong>'
+              + ' L10:<strong style="color:' + l10cl + '">' + (leg.l10_hr||0).toFixed(0) + '%</strong>'
+              + ' L20:<strong>' + (leg.l20_hr||0).toFixed(0) + '%</strong>';
+        if (leg.dist_profile && leg.dist_profile !== 'UNKNOWN') {
+          html += ' · <span style="color:var(--muted2)">' + esc(leg.dist_profile) + '</span>';
+        }
+        html += '</div></div>';
+        html += '<div class="suggest-leg-odds">' + oddsStr + '</div>';
+        html += '</div>';
+      });
+
+      html += '</div>';  // end parlay block
+    });
+  }
+
+  // Pool section
+  if (pool.length) {
+    html += '<div class="suggest-pool-label">Full eligible pool (' + pool.length + ' legs)</div>';
+    pool.forEach(function(leg) {
+      var t = leg.no_brainer_tier;
+      var tBadge = t ? '<span class="nb-badge ' + (t==='PRIME'?'nb-prime':t==='STRONG'?'nb-strong':'nb-solid') + '">' + t + '</span>' : '';
+      var softFlag = leg.regression_soft ? ' ⚠' : '';
+      var oddsStr = leg.odds != null ? (leg.odds > 0 ? '+' + leg.odds : '' + leg.odds) : '—';
+      html += '<div style="display:flex;align-items:center;padding:5px 8px;font-size:11px;border-bottom:1px solid #10102a">';
+      html += '<div style="flex:1">' + tBadge + '<span style="color:var(--text)">' + esc(leg.player_name||'') + softFlag + '</span>'
+            + ' <span style="color:var(--muted2)">' + esc(leg.stat||'') + ' O' + (leg.line||'') + ' · ' + esc(leg.team||'') + '</span></div>';
+      html += '<span style="color:#a78bfa;font-family:var(--mono);font-size:10px">' + oddsStr + '</span>';
+      html += '</div>';
+    });
+  }
+
+  box.innerHTML = html;
+}
+
+function switchSuggestTab(n) {
+  document.querySelectorAll('.suggest-tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.suggest-parlay-block').forEach(function(b){ b.classList.remove('active'); });
+  var activeTab = document.querySelector('#suggestTabs button:nth-child(' + (['3','4','5'].indexOf(String(n))+1) + ')');
+  // simpler: find by text content
+  document.querySelectorAll('.suggest-tab').forEach(function(t){
+    if (t.textContent.startsWith(n + '-')) t.classList.add('active');
+  });
+  var block = document.getElementById('suggestBlock-' + n);
+  if (block) block.classList.add('active');
+}
+
+function loadSuggestParlay(n) {
+  if (!_suggestData) return;
+  var parlay = _suggestData.parlays[String(n)];
+  if (!parlay) return;
+  // Clear current tray then load all legs
+  clearParlay();
+  var fullProps = parlay.leg_cards || [];
+  // Match against allProps by key to get full card data
+  fullProps.forEach(function(slim) {
+    var full = allProps.find(function(p){ return p.key === slim.key; });
+    if (full) {
+      parlayLegs[full.key] = full;
+      var cardEl = document.querySelector('.card[onclick*="' + CSS.escape(full.key) + '"]');
+      if (cardEl) cardEl.classList.add('parlay-selected');
+    }
+  });
+  renderTray();
+  closeSuggestModal();
+}
+
+function loadSuggestSingleLeg(key) {
+  var full = allProps.find(function(p){ return p.key === key; });
+  if (!full) return;
+  if (parlayLegs[key]) {
+    delete parlayLegs[key];
+    var cardEl = document.querySelector('.card[onclick*="' + CSS.escape(key) + '"]');
+    if (cardEl) cardEl.classList.remove('parlay-selected');
+  } else {
+    parlayLegs[key] = full;
+    var cardEl = document.querySelector('.card[onclick*="' + CSS.escape(key) + '"]');
+    if (cardEl) cardEl.classList.add('parlay-selected');
+  }
+  renderTray();
 }
 
 function toggleNote(si) {
@@ -1786,11 +2478,30 @@ function renderSidebar() {
   }
 
   // ── Slate summary banner ──────────────────────────────────────────────
-  var lockCount   = allProps.filter(function(p){return p.lock||p.lock_under;}).length;
-  var hammerCount = allProps.filter(function(p){return p.hammer && !p.lock && !p.lock_under;}).length;
-  var injCount    = allProps.filter(function(p){return !!p.opportunity;}).length;
-  var steamCount  = allProps.filter(function(p){ var mv = p.line_movement||{}; return mv.steam_move||mv.sharp_move; }).length;
-  var gtdCount    = allProps.filter(function(p){ return p.gtd; }).length;
+  var lockCount      = allProps.filter(function(p){return p.lock||p.lock_under;}).length;
+  var hammerCount    = allProps.filter(function(p){return p.hammer && !p.lock && !p.lock_under;}).length;
+  var injCount       = allProps.filter(function(p){return !!p.opportunity;}).length;
+  var steamCount     = allProps.filter(function(p){ var mv = p.line_movement||{}; return mv.steam_move||mv.sharp_move; }).length;
+  var gtdCount       = allProps.filter(function(p){ return p.gtd; }).length;
+  var mispricedCount = allProps.filter(function(p){ return (p.edge_score||0) >= 65; }).length;
+  var nbCount        = allProps.filter(function(p){ return !!p.no_brainer_tier; }).length;
+  var nbBreakdown    = ['PRIME','STRONG','SOLID'].map(function(t){
+    var n = allProps.filter(function(p){ return p.no_brainer_tier===t; }).length;
+    return n ? n + ' ' + t : '';
+  }).filter(Boolean).join(' · ');
+  var histCount      = allProps.filter(function(p){ return !!p.hist_tier; }).length;
+  var histBreakdown  = ['PROVEN','TRENDING','WATCH'].map(function(t){
+    var n = allProps.filter(function(p){ return p.hist_tier===t; }).length;
+    return n ? n + ' ' + t : '';
+  }).filter(Boolean).join(' · ');
+  var tradeAlertCount = allProps.filter(function(p){ return p.trade_alert; }).length;
+  var playoffPushCount = allProps.filter(function(p){ return p.playoff_push; }).length;
+  var tankingCount = allProps.filter(function(p){ return p.tanking; }).length;
+  var softDefCount = allProps.filter(function(p){
+    var la = p.stat==='PTS'?111:p.stat==='REB'?44:p.stat==='AST'?25:p.stat==='FG3M'?13.5:null;
+    var oa = p.stat==='PTS'?p.opp_pts_allowed:p.stat==='REB'?p.opp_reb_allowed:p.stat==='AST'?p.opp_ast_allowed:p.stat==='FG3M'?p.opp_fg3m_allowed:null;
+    return la && oa && (oa-la)/la >= 0.06;
+  }).length;
   var prCount     = allProps.filter(function(p){
     var _SI = ['REB','AST','RA','BLK','STL','TOV'];
     return _SI.indexOf((p.stat||'').toUpperCase()) >= 0 && p.lock && p.true_over_pct>=80;
@@ -1800,6 +2511,13 @@ function renderSidebar() {
     sumEl.style.display = 'flex';
     sumEl.innerHTML =
       '<span class="slate-stat count"><strong style="color:var(--text)">' + allProps.length + '</strong> <span>props</span></span>' +
+      (nbCount      ? '<span class="slate-stat" style="color:#22c55e;cursor:pointer" onclick="openSuggestModal()" title="' + nbBreakdown + '"><strong>' + nbCount + '</strong> <span>🎯 tier</span></span>' : '') +
+      (histCount    ? '<span class="slate-stat" style="color:#fbbf24;cursor:pointer" onclick="setFilter(\'signal\',\'hist_edge\',document.querySelector(\'[data-val=hist_edge]\'))" title="' + histBreakdown + '"><strong>' + histCount + '</strong> <span>★ hist edge</span></span>' : '') +
+      (softDefCount ? '<span class="slate-stat" style="color:#4ade80;cursor:pointer" onclick="setFilter(\'signal\',\'soft_def\',document.querySelector(\'[data-val=soft_def]\'))"><strong>' + softDefCount + '</strong> <span>🟢 soft def</span></span>' : '') +
+      (tradeAlertCount ? '<span class="slate-stat" style="color:#f87171;cursor:pointer" onclick="setFilter(\'signal\',\'trade_alert\',document.querySelector(\'[data-val=trade_alert]\'))"><strong>' + tradeAlertCount + '</strong> <span>⚠ trade?</span></span>' : '') +
+      (playoffPushCount ? '<span class="slate-stat" style="color:#4ade80;cursor:pointer" onclick="setFilter(\'signal\',\'playoff_push\',document.querySelector(\'[data-val=playoff_push]\'))"><strong>' + playoffPushCount + '</strong> <span>🏆 push</span></span>' : '') +
+      (tankingCount ? '<span class="slate-stat" style="color:#f87171;cursor:pointer" onclick="setFilter(\'signal\',\'tanking\',document.querySelector(\'[data-val=tanking]\'))"><strong>' + tankingCount + '</strong> <span>📉 tanking</span></span>' : '') +
+      (mispricedCount ? '<span class="slate-stat" style="color:#f5a623"><strong>' + mispricedCount + '</strong> <span>🎯 mispriced</span></span>' : '') +
       (lockCount   ? '<span class="slate-stat locks"><strong>' + lockCount   + '</strong> <span>lock' + (lockCount>1?'s':'') + '</span></span>' : '') +
       (hammerCount ? '<span class="slate-stat hammer"><strong>' + hammerCount + '</strong> <span>hammer' + (hammerCount>1?'s':'') + '</span></span>' : '') +
       (injCount    ? '<span class="slate-stat inj"><strong>' + injCount + '</strong> <span>injury opp' + (injCount>1?'s':'') + '</span></span>' : '') +
@@ -1808,9 +2526,10 @@ function renderSidebar() {
       (prCount     ? '<span class="slate-stat" style="color:#a78bfa"><strong>' + prCount + '</strong> <span>parlay-ready</span></span>' : '');
   }
 
-  // ── Top Picks sidebar ─────────────────────────────────────────────────
+  // ── Top Picks sidebar — now ranked by edge_score ──────────────────────
   var topPicks = allProps
-    .filter(function(p){ return p.lock || p.lock_under || p.hammer || (p.score||0) >= 2.5; })
+    .filter(function(p){ return (p.edge_score||0) >= 52 || p.lock || p.lock_under || p.hammer; })
+    .sort(function(a,b){ return (b.edge_score||0) - (a.edge_score||0); })
     .slice(0, 7);
   var tpEl = document.getElementById('topPicksList');
   if (tpEl) {
@@ -1912,13 +2631,43 @@ function renderTrackRecord(tr) {
   if (!tr) return;
   var fmt = function(v){return v!=null?v+'%':'—';};
   var cls = function(v){return v==null?'':v>=65?'good':v>=50?'warn':'bad';};
-  document.getElementById('trackRecord').innerHTML =
-    '<div class="track-record">'
+
+  var html = '<div class="track-record">'
     +'<div class="tr-box"><div class="tr-label">ALL PROPS</div><div class="tr-value '+cls(tr.overall_hit_rate)+'">'+fmt(tr.overall_hit_rate)+'</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">'+(tr.overall_total||0)+' graded</div></div>'
     +'<div class="tr-box"><div class="tr-label">🔒 LOCKS</div><div class="tr-value '+cls(tr.lock_hit_rate)+'">'+fmt(tr.lock_hit_rate)+'</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">'+(tr.lock_total||0)+' graded</div></div>'
     +'<div class="tr-box"><div class="tr-label">🔨 HAMMERS</div><div class="tr-value '+cls(tr.hammer_hit_rate)+'">'+fmt(tr.hammer_hit_rate)+'</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">'+(tr.hammer_total||0)+' graded</div></div>'
     +'<div class="tr-box"><div class="tr-label">⚡ PARLAY RDY</div><div class="tr-value '+cls(tr.parlay_ready_hit_rate)+'">'+fmt(tr.parlay_ready_hit_rate)+'</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">'+(tr.parlay_ready_total||0)+' graded</div></div>'
     +'</div>';
+
+  // DQ vs Clean — validates the parlay filter over time
+  if (tr.dq_total || tr.clean_total) {
+    html += '<div style="margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em">Parlay Filter Validation</div>';
+    html += '<div class="track-record" style="margin-top:4px">';
+    if (tr.clean_total) {
+      html += '<div class="tr-box"><div class="tr-label">✅ CLEAN (no DQ)</div><div class="tr-value '+cls(tr.clean_hit_rate)+'">'+fmt(tr.clean_hit_rate)+'</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">'+tr.clean_total+' graded</div></div>';
+    }
+    if (tr.dq_total) {
+      html += '<div class="tr-box"><div class="tr-label">🚫 PARLAY DQ</div><div class="tr-value '+cls(tr.dq_hit_rate)+'">'+fmt(tr.dq_hit_rate)+'</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">'+tr.dq_total+' graded</div></div>';
+    }
+    html += '</div>';
+  }
+
+  // Distribution profile breakdown — validates CONSISTENT/MODERATE gate
+  if (tr.by_dist_profile && Object.keys(tr.by_dist_profile).length) {
+    html += '<div style="margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em">By Distribution Profile</div>';
+    html += '<div class="track-record" style="margin-top:4px">';
+    ['CONSISTENT','MODERATE','VOLATILE','VOLATILE-FLOOR','UNKNOWN'].forEach(function(prof) {
+      var d = tr.by_dist_profile[prof];
+      if (!d) return;
+      var icon = prof==='CONSISTENT'?'🟢':prof==='MODERATE'?'🟡':prof==='VOLATILE'?'🔴':prof==='VOLATILE-FLOOR'?'🔴':'⚪';
+      html += '<div class="tr-box"><div class="tr-label">'+icon+' '+prof.replace('VOLATILE-FLOOR','VOL-FLOOR')+'</div>'
+        +'<div class="tr-value '+cls(d.hit_rate)+'">'+d.hit_rate+'%</div>'
+        +'<div style="font-family:var(--mono);font-size:9px;color:var(--muted)">'+d.total+' graded</div></div>';
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('trackRecord').innerHTML = html;
 }
 
 function renderResultsList(results) {
@@ -2007,6 +2756,11 @@ function appendChatMsg(role, text) {
 }
 </script>
 <!-- ── Parlay Builder Tray ──────────────────────────────────────────────── -->
+<!-- ── Auto-Parlay Suggest Modal ──────────────────────────────────────── -->
+<div id="suggestModal" onclick="if(event.target===this)closeSuggestModal()">
+  <div id="suggestBox"></div>
+</div>
+
 <div id="parlayTray">
   <div class="tray-header">
     <div>
